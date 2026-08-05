@@ -5,8 +5,8 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 // Route-level code splitting: each page is its own chunk.
-const HomePage = lazy(() =>
-  import('@/pages/HomePage').then((m) => ({ default: m.HomePage })),
+const HomepageView = lazy(() =>
+  import('@/view/homepage').then((m) => ({ default: m.HomepageView })),
 )
 const UsersListPage = lazy(() =>
   import('@/features/users/UsersListPage').then((m) => ({ default: m.UsersListPage })),
@@ -22,8 +22,8 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <AppLayout />,
-        children: [
-          { index: true, element: <HomePage /> },
+        children: [ 
+          { index: true, element: <HomepageView /> },
           { path: 'users', element: <UsersListPage /> },
         ],
       },
