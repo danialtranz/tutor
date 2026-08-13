@@ -2,7 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { tokenStorage } from '@/lib/api/token-storage'
 import { authApi } from './auth.api'
-import type { AuthUser, LoginPayload, RegisterStudentPayload, RegisterTutorPayload } from './auth.types'
+import type {
+  AuthUser,
+  LoginPayload,
+  RegisterStudentPayload,
+  RegisterTutorPayload,
+} from './auth.types'
 
 interface AuthState {
   user: AuthUser | null
@@ -10,9 +15,10 @@ interface AuthState {
   error: string | null
   isAuthenticated: boolean
   login: (payload: LoginPayload) => Promise<void>
+  logout: () => void
+  initialize: () => Promise<void>
   registerStudent: (payload: RegisterStudentPayload) => Promise<void>
   registerTutor: (payload: RegisterTutorPayload) => Promise<void>
-  logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,7 +36,7 @@ export const useAuthStore = create<AuthState>()(
           tokenStorage.set(res.accessToken, res.refreshToken)
           set({ user: res.user, isAuthenticated: true, status: 'idle' })
         } catch (e) {
-          const message = e instanceof Error ? e.message : 'Đăng nhập thất bại'
+          const message = e instanceof Error ? e.message : 'error'
           set({ status: 'error', error: message })
           throw e
         }
@@ -39,11 +45,10 @@ export const useAuthStore = create<AuthState>()(
       async registerStudent(payload) {
         set({ status: 'loading', error: null })
         try {
-          const res = await authApi.registerStudent(payload)
-          tokenStorage.set(res.accessToken, res.refreshToken)
-          set({ user: res.user, isAuthenticated: true, status: 'idle' })
+          await authApi.registerStudent(payload)
+          set({ status: 'idle' })
         } catch (e) {
-          const message = e instanceof Error ? e.message : 'Đăng ký thất bại'
+          const message = e instanceof Error ? e.message : 'error'
           set({ status: 'error', error: message })
           throw e
         }
@@ -52,13 +57,29 @@ export const useAuthStore = create<AuthState>()(
       async registerTutor(payload) {
         set({ status: 'loading', error: null })
         try {
-          const res = await authApi.registerTutor(payload)
-          tokenStorage.set(res.accessToken, res.refreshToken)
-          set({ user: res.user, isAuthenticated: true, status: 'idle' })
+          await authApi.registerTutor(payload)
+          set({ status: 'idle' })
         } catch (e) {
-          const message = e instanceof Error ? e.message : 'Đăng ký thất bại'
+          const message = e instanceof Error ? e.message : 'error'
           set({ status: 'error', error: message })
           throw e
+        }
+      },
+
+      async initialize() {
+        const token = tokenStorage.getAccess()
+        if (!token) {
+          set({ user: null, isAuthenticated: false, status: 'idle', error: null })
+          return
+        }
+
+        set({ status: 'loading', error: null })
+        try {
+          const user = await authApi.me()
+          set({ user, isAuthenticated: true, status: 'idle', error: null })
+        } catch {
+          tokenStorage.clear()
+          set({ user: null, isAuthenticated: false, status: 'idle', error: null })
         }
       },
 
@@ -69,9 +90,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth',
+      // Only persist identity; tokens live in tokenStorage.
       partialize: (s) => ({ user: s.user, isAuthenticated: s.isAuthenticated }),
     },
   ),
 )
 
+// Keep the store in sync when the HTTP layer forces a logout (refresh failed).
 window.addEventListener('auth:logout', () => useAuthStore.getState().logout())
