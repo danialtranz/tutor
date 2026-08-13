@@ -56,7 +56,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 {user.name}
               </span>
               <span className="text-xs text-indigo-600 dark:text-indigo-400 capitalize font-medium">
-                {user.role || 'Thành viên'}
+                {user.role}
               </span>
             </div>
             <Button
@@ -64,16 +64,25 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               size="sm"
               onClick={() => {
                 logout()
-                navigate('/login')
+                navigate('/')
               }}
             >
               {t('nav.logout')}
             </Button>
           </div>
         ) : (
-          <Button size="sm" onClick={() => navigate('/login')}>
-            Đăng nhập
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => navigate('/login')}>
+              Đăng nhập
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => navigate('/register/student')}
+            >
+              Đăng ký HV
+            </Button>
+          </div>
         )}
       </div>
     </header>
