@@ -6,7 +6,7 @@ import { RoleBasedRoute } from '@/features/auth/RoleBasedRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage'
 
-// Route-level code splitting: each page is its own chunk.
+// Lazy loading pages
 const HomePage = lazy(() =>
   import('@/pages/HomePage').then((m) => ({ default: m.HomePage })),
 )
@@ -42,6 +42,7 @@ const UsersManagementPage = lazy(() =>
 )
 
 export const router = createBrowserRouter([
+  // Public Auth Routes
   { path: '/login', element: <LoginPage /> },
   { path: '/register/student', element: <StudentRegisterPage /> },
   { path: '/register/tutor', element: <TutorRegisterPage /> },
@@ -73,5 +74,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  // 404 Fallback
   { path: '*', element: <NotFoundPage /> },
 ])
