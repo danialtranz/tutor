@@ -1,23 +1,15 @@
-export type UserRole = 'student' | 'tutor' | 'admin'
-
 export interface AuthUser {
   id: number
   name: string
   email: string
-  role: UserRole
-  avatar?: string
+  role: 'student' | 'tutor' | 'admin'
+  status: 'active' | 'locked'
+  timeZoneId?: string
 }
 
 export interface LoginPayload {
   email: string
   password: string
-  role?: UserRole
-}
-
-export interface LoginResponse {
-  accessToken: string
-  refreshToken?: string
-  user: AuthUser
 }
 
 export interface RegisterStudentPayload {
@@ -25,8 +17,8 @@ export interface RegisterStudentPayload {
   email: string
   password: string
   phone: string
-  grade: string
-  address: string
+  gradeLevel: string
+  learningNeeds: string
 }
 
 export interface RegisterTutorPayload {
@@ -34,8 +26,13 @@ export interface RegisterTutorPayload {
   email: string
   password: string
   phone: string
+  bio: string
   qualification: string
   experienceYears: number
-  bio: string
-  subjects: string[]
+}
+
+export interface LoginResponse {
+  accessToken: string
+  refreshToken?: string
+  user: AuthUser
 }
