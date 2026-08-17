@@ -6,7 +6,7 @@ import { RoleBasedRoute } from '@/features/auth/RoleBasedRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage'
 
-// Route-level code splitting: each page is its own chunk.
+// Lazy loading pages
 const HomePage = lazy(() =>
   import('@/pages/HomePage').then((m) => ({ default: m.HomePage })),
 )
@@ -21,6 +21,12 @@ const StudentRegisterPage = lazy(() =>
 )
 const TutorRegisterPage = lazy(() =>
   import('@/features/auth/TutorRegisterPage').then((m) => ({ default: m.TutorRegisterPage })),
+)
+const ForgotPasswordPage = lazy(() =>
+  import('@/features/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })),
+)
+const ResetPasswordPage = lazy(() =>
+  import('@/features/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
 )
 const AdminLayout = lazy(() =>
   import('@/features/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
@@ -42,10 +48,14 @@ const UsersManagementPage = lazy(() =>
 )
 
 export const router = createBrowserRouter([
+  // Public Auth Routes
   { path: '/login', element: <LoginPage /> },
   { path: '/register/student', element: <StudentRegisterPage /> },
   { path: '/register/tutor', element: <TutorRegisterPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   { path: '/unauthorized', element: <UnauthorizedPage /> },
+
   { path: '/', element: <HomePage /> },
   {
     element: <ProtectedRoute />,
@@ -73,5 +83,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  // 404 Fallback
   { path: '*', element: <NotFoundPage /> },
 ])

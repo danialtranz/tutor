@@ -5,6 +5,7 @@ import axios, {
 } from 'axios'
 import { env } from '@/config/env'
 import { tokenStorage } from './token-storage'
+import { authApi } from '@/features/auth/auth.api'
 
 /** Shape our backend uses for error payloads. Adapt to your API. */
 export interface ApiErrorBody {
@@ -52,10 +53,7 @@ let refreshing: Promise<void> | null = null
 async function refreshSession(): Promise<void> {
   const refresh = tokenStorage.getRefresh()
   if (!refresh) throw new Error('No refresh token')
-  const { data } = await axios.post<{ accessToken: string; refreshToken?: string }>(
-    `${env.apiBaseUrl}/auth/refresh`,
-    { refreshToken: refresh },
-  )
+  const data = await authApi.refresh()
   tokenStorage.set(data.accessToken, data.refreshToken)
 }
 

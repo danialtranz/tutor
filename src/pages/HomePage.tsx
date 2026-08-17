@@ -1,328 +1,326 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+
 import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 
 export function HomePage() {
+  const navigate = useNavigate()
+
   return (
-    <section className="relative overflow-hidden">
-      {/* Background decoration */}
+    <section className="relative overflow-hidden space-y-16 py-4 sm:py-8">
+      {/* Background Orbs Decoration */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-32 top-10 h-72 w-72 rounded-full bg-brand-100/60 blur-3xl"
+        className="pointer-events-none absolute -left-32 top-10 h-96 w-96 rounded-full bg-brand-500/15 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-32 top-0 h-96 w-96 rounded-full bg-blue-100/60 blur-3xl"
+        className="pointer-events-none absolute -right-32 top-0 h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl"
       />
 
-      <div className="relative flex flex-col gap-20">
-        {/* =========================================================
-            HERO
-        ========================================================= */}
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 px-6 py-14 text-white shadow-xl shadow-brand-600/20 sm:px-10 sm:py-20 lg:px-16 lg:py-24">
-          {/* Animated glow */}
-          <div
-            aria-hidden="true"
-            className="absolute -right-20 -top-20 h-80 w-80 animate-pulse rounded-full bg-white/10 blur-3xl"
-          />
+      {/* =========================================================
+          HERO BANNER FOR VISITORS & GUESTS
+      ========================================================= */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 px-6 py-12 text-white shadow-2xl shadow-brand-600/20 sm:px-12 sm:py-16 lg:px-16 lg:py-20">
+        {/* Animated Glow */}
+        <div
+          aria-hidden="true"
+          className="absolute -right-20 -top-20 h-80 w-80 animate-pulse rounded-full bg-white/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-32 right-1/4 h-72 w-72 rounded-full bg-cyan-300/15 blur-3xl"
+        />
 
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-32 right-1/4 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl"
-          />
+        {/* Grid pattern */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
 
-          {/* Grid pattern */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 opacity-[0.08]"
-            style={{
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-            }}
-          />
-
-          <div className="relative z-10 grid items-center gap-12 lg:grid-cols-[1.2fr_0.8fr]">
-            {/* Hero content */}
-            <div className="max-w-3xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-md">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-                Kết nối học tập thông minh
-              </div>
-
-              <h1 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-                Tìm đúng gia sư.
-                <br />
-                <span className="text-white/75">Học đúng hướng.</span>
-              </h1>
-
-              <p className="mt-6 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
-                Kết Nối Gia Sư giúp học viên tìm kiếm gia sư phù hợp với nhu
-                cầu học tập, đồng thời giúp gia sư tiếp cận những học viên phù
-                hợp với chuyên môn của mình.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to="/register/student"
-                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-brand-700 shadow-lg shadow-black/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  Tìm gia sư
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">
-                    →
-                  </span>
-                </Link>
-
-                <Link
-                  to="/register/tutor"
-                  className="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 font-semibold text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:bg-white/20"
-                >
-                  Trở thành gia sư
-                </Link>
-              </div>
+        <div className="relative z-10 grid items-center gap-12 lg:grid-cols-12">
+          {/* Hero text & action buttons */}
+          <div className="lg:col-span-7">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-extrabold backdrop-blur-md">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-300" />
+              Nền tảng kết nối gia sư – học viên hàng đầu
             </div>
 
-            {/* Floating visual */}
-            <div className="relative hidden min-h-[330px] lg:block">
-              {/* Main card */}
-              <div className="absolute right-5 top-10 w-72 rotate-2 rounded-2xl border border-white/20 bg-white/95 p-5 text-gray-900 shadow-2xl shadow-black/20 backdrop-blur-xl transition-transform duration-500 hover:rotate-0 hover:scale-[1.02]">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-xl">
-                    👨‍🏫
-                  </div>
+            <h1 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl leading-tight">
+              Tìm đúng gia sư.
+              <br />
+              <span className="text-white/80">Học đúng định hướng.</span>
+            </h1>
 
-                  <div>
-                    <p className="font-semibold">Gia sư phù hợp</p>
-                    <p className="text-sm text-gray-500">
-                      Toán học · Đại học
-                    </p>
-                  </div>
-                </div>
+            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
+              GiaSưConnect mang đến giải pháp kết nối trực tiếp học viên với đội ngũ gia sư chất lượng cao đã qua kiểm định bằng cấp, giúp học viên tiến bộ nhanh chóng và tự tin đạt mọi mục tiêu học tập.
+            </p>
 
-                <div className="mt-5 flex items-center justify-between border-t pt-4">
-                  <div>
-                    <p className="text-xs text-gray-400">Đánh giá</p>
-                    <p className="font-semibold">⭐ 4.9 / 5</p>
-                  </div>
+            {/* PROMINENT REGISTER & LOGIN BUTTONS */}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Button
+                size="lg"
+                variant="white"
+                onClick={() => navigate('/register/student')}
+              >
+                🎓 Đăng ký Học viên →
+              </Button>
 
-                  <div>
-                    <p className="text-xs text-gray-400">Kinh nghiệm</p>
-                    <p className="font-semibold">3+ năm</p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Floating match card */}
-              <div className="absolute bottom-8 left-4 w-60 -rotate-3 rounded-2xl border border-white/20 bg-white/90 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl transition-all duration-500 hover:rotate-0 hover:scale-105">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
-                    ✨
-                  </div>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/15 backdrop-blur-md font-bold"
+                onClick={() => navigate('/register/tutor')}
+              >
+                👨‍🏫 Đăng ký Gia sư
+              </Button>
 
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Kết nối thành công
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Phù hợp với mục tiêu học tập
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Decorative orb */}
-              <div className="absolute bottom-16 right-0 h-24 w-24 animate-pulse rounded-full bg-white/10 blur-2xl" />
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/20 bg-black/20 text-white hover:bg-black/30 backdrop-blur-md font-bold"
+                onClick={() => navigate('/login')}
+              >
+                🔑 Đăng nhập ngay
+              </Button>
             </div>
           </div>
-        </section>
 
-        {/* =========================================================
-            STATS
-        ========================================================= */}
-        <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[
-            ['100+', 'Gia sư'],
-            ['500+', 'Học viên'],
-            ['20+', 'Môn học'],
-            ['4.8/5', 'Đánh giá'],
-          ].map(([value, label]) => (
-            <div
-              key={label}
-              className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-            >
-              <p className="text-2xl font-black text-brand-600 sm:text-3xl">
-                {value}
-              </p>
+          {/* Floating Hero Card Visual */}
+          <div className="relative hidden lg:col-span-5 lg:block min-h-[340px]">
+            <div className="absolute right-2 top-4 w-80 rotate-2 rounded-3xl border border-white/30 bg-white/95 p-6 text-slate-900 shadow-2xl shadow-black/25 backdrop-blur-xl transition-all duration-500 hover:rotate-0 hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-2xl text-white shadow-md">
+                  👨‍🏫
+                </div>
+                <div>
+                  <p className="font-extrabold text-slate-900 text-sm">Gia sư đã xác thực</p>
+                  <p className="text-xs font-semibold text-brand-600">Toán THPT · Đại học Sư Phạm</p>
+                </div>
+              </div>
 
-              <p className="mt-1 text-sm text-gray-500">{label}</p>
+              <div className="mt-5 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Đánh giá</p>
+                  <p className="font-extrabold text-slate-800 text-sm">⭐ 4.9 / 5.0</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Bằng cấp</p>
+                  <p className="font-extrabold text-emerald-600 text-sm">✓ Đã duyệt</p>
+                </div>
+              </div>
             </div>
+
+            <div className="absolute bottom-4 left-0 w-64 -rotate-3 rounded-3xl border border-white/30 bg-white/90 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl transition-all duration-500 hover:rotate-0 hover:scale-105">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 font-bold">
+                  ✨
+                </div>
+                <div>
+                  <p className="text-xs font-extrabold text-slate-900">Kết nối thành công</p>
+                  <p className="text-[11px] text-slate-500 font-medium">Khớp 98% nhu cầu học tập</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
+          LIVE STATS BAR
+      ========================================================= */}
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[
+          ['100+', 'Gia sư Verified', '👨‍🏫', 'bg-brand-50 text-brand-600'],
+          ['500+', 'Học viên active', '🎓', 'bg-indigo-50 text-indigo-600'],
+          ['20+', 'Môn học phổ biến', '📚', 'bg-emerald-50 text-emerald-600'],
+          ['4.9/5', 'Đánh giá hài lòng', '⭐', 'bg-amber-50 text-amber-600'],
+        ].map(([value, label, icon, badgeBg]) => (
+          <div
+            key={label}
+            className="rounded-3xl border border-slate-200/80 bg-white p-6 text-center shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl text-xl ${badgeBg}`}>
+              {icon}
+            </div>
+            <p className="text-3xl font-black text-slate-900 dark:text-white">
+              {value}
+            </p>
+            <p className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">{label}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* =========================================================
+          SUBJECT CATEGORIES (KHÁM PHÁ MÔN HỌC)
+      ========================================================= */}
+      <section className="space-y-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-block rounded-full bg-brand-50 px-3.5 py-1 text-xs font-extrabold text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
+            DANH MỤC PHỔ BIẾN
+          </span>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+            Khám phá các môn học hàng đầu
+          </h2>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            Đội ngũ gia sư giỏi đáp ứng đầy đủ nhu cầu học phổ thông, ôn thi chứng chỉ và kỹ năng lập trình.
+          </p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              icon: '📐',
+              title: 'Toán Học Phổ Thông',
+              desc: 'Đại số & Hình học Lớp 6 - 12, Luyện thi THPT Quốc Gia',
+              tutors: '42 gia sư',
+              color: 'from-blue-500 to-indigo-600',
+            },
+            {
+              icon: '🇬🇧',
+              title: 'Luyện Thi IELTS & Anh Văn',
+              desc: 'Luyện 4 kỹ năng Nghe - Nói - Đọc - Viết & Tiếng Anh giao tiếp',
+              tutors: '35 gia sư',
+              color: 'from-emerald-500 to-teal-600',
+            },
+            {
+              icon: '🔬',
+              title: 'Vật Lý & Hóa Học',
+              desc: 'Lý thuyết & Bài tập nâng cao Lớp 8 - Lớp 12',
+              tutors: '28 gia sư',
+              color: 'from-purple-500 to-indigo-600',
+            },
+            {
+              icon: '💻',
+              title: 'Lập Trình Python & Web',
+              desc: 'Tư duy thuật toán, phát triển phần mềm cho học sinh & sinh viên',
+              tutors: '19 gia sư',
+              color: 'from-amber-500 to-orange-600',
+            },
+          ].map((cat) => (
+            <Card
+              key={cat.title}
+              className="group relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl cursor-pointer"
+            >
+              <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr ${cat.color} text-2xl text-white shadow-md transition-transform duration-300 group-hover:scale-110`}>
+                {cat.icon}
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                {cat.title}
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                {cat.desc}
+              </p>
+              <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
+                <span className="text-xs font-bold text-brand-600 dark:text-brand-400">{cat.tutors}</span>
+                <span className="text-xs font-bold text-slate-400 transition-transform group-hover:translate-x-1">Đăng ký ngay →</span>
+              </div>
+            </Card>
           ))}
-        </section>
+        </div>
+      </section>
 
-        {/* =========================================================
-            FEATURES
-        ========================================================= */}
-        <section>
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-wider text-brand-600">
-              Tại sao chọn chúng tôi?
+      {/* =========================================================
+          HOW IT WORKS (3 BƯỚC ĐƠN GIẢN)
+      ========================================================= */}
+      <section className="space-y-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="inline-block rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-extrabold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300">
+            QUY TRÌNH ĐƠN GIẢN
+          </span>
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+            Bắt đầu kết nối chỉ với 3 bước
+          </h2>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              step: '01',
+              title: 'Tạo tài khoản học tập',
+              desc: 'Đăng ký nhanh tài khoản Học viên hoặc Gia sư chỉ trong 1 phút.',
+              icon: '📝',
+            },
+            {
+              step: '02',
+              title: 'Xác thực & Kết nối',
+              desc: 'Ban quản trị đối chiếu bằng cấp gia sư, học viên dễ dàng chọn lựa.',
+              icon: '🤝',
+            },
+            {
+              step: '03',
+              title: 'Học tập & Đánh giá',
+              desc: 'Bắt đầu quá trình dạy học và theo dõi kết quả minh bạch trên hệ thống.',
+              icon: '🚀',
+            },
+          ].map((item) => (
+            <Card
+              key={item.step}
+              className="group relative overflow-hidden p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-2xl font-black text-brand-600 dark:bg-brand-950/60 dark:text-brand-400">
+                  {item.icon}
+                </span>
+                <span className="font-mono text-2xl font-black text-slate-200 dark:text-slate-800">
+                  {item.step}
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {item.title}
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                {item.desc}
+              </p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================
+          BOTTOM REGISTER / LOGIN CTA BANNER
+      ========================================================= */}
+      <section className="relative overflow-hidden rounded-3xl bg-slate-950 px-8 py-12 text-white shadow-2xl sm:px-12 lg:px-16">
+        <div
+          aria-hidden="true"
+          className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl"
+        />
+
+        <div className="relative z-10 flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+          <div className="max-w-2xl">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-brand-400">
+              TRẢI NGHIỆM HỆ THỐNG NGAY
             </span>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Một nền tảng cho toàn bộ hành trình học tập
+            <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">
+              Sẵn sàng tìm người đồng hành trong hành trình học tập?
             </h2>
-
-            <p className="mt-4 text-gray-500">
-              Từ tìm kiếm gia sư đến theo dõi tiến độ, mọi thứ được kết nối
-              trong một trải nghiệm đơn giản.
+            <p className="mt-2 text-xs text-slate-400">
+              Tạo tài khoản miễn phí ngay hôm nay và kết nối với cộng đồng gia sư uy tín.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            <FeatureCard
-              icon="🔎"
-              title="Tìm gia sư phù hợp"
-              description="Khám phá và lựa chọn gia sư dựa trên môn học, chuyên môn và nhu cầu học tập."
-            />
-
-            <FeatureCard
-              icon="🤝"
-              title="Kết nối dễ dàng"
-              description="Tạo kết nối giữa học viên và gia sư một cách thuận tiện, rõ ràng và minh bạch."
-            />
-
-            <FeatureCard
-              icon="📈"
-              title="Theo dõi tiến độ"
-              description="Theo dõi quá trình học tập và kết quả để liên tục cải thiện hiệu quả."
-            />
-          </div>
-        </section>
-
-        {/* =========================================================
-            HOW IT WORKS
-        ========================================================= */}
-        <section>
-          <div className="mb-10">
-            <span className="text-sm font-semibold uppercase tracking-wider text-brand-600">
-              Cách hoạt động
-            </span>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900">
-              Bắt đầu chỉ với vài bước
-            </h2>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {[
-              {
-                number: '01',
-                title: 'Tạo tài khoản',
-                description:
-                  'Đăng ký với tư cách học viên hoặc gia sư để bắt đầu sử dụng nền tảng.',
-              },
-              {
-                number: '02',
-                title: 'Tìm kiếm & kết nối',
-                description:
-                  'Tìm kiếm đối tượng phù hợp và bắt đầu quá trình kết nối.',
-              },
-              {
-                number: '03',
-                title: 'Bắt đầu học tập',
-                description:
-                  'Thực hiện quá trình học và theo dõi tiến độ trên nền tảng.',
-              },
-            ].map((step) => (
-              <Card
-                key={step.number}
-                className="group relative overflow-hidden border-gray-100 p-7 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
-              >
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 font-bold text-brand-600 transition-all duration-300 group-hover:scale-110 group-hover:bg-brand-600 group-hover:text-white">
-                  {step.number}
-                </div>
-
-                <h3 className="text-lg font-bold text-gray-900">
-                  {step.title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-6 text-gray-500">
-                  {step.description}
-                </p>
-
-                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-brand-50 transition-transform duration-500 group-hover:scale-150" />
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* =========================================================
-            CTA
-        ========================================================= */}
-        <section className="relative overflow-hidden rounded-[2rem] bg-gray-950 px-6 py-14 text-white sm:px-10 lg:px-16">
-          <div
-            aria-hidden="true"
-            className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand-600/30 blur-3xl"
-          />
-
-          <div className="relative z-10 flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold text-brand-300">
-                BẮT ĐẦU NGAY HÔM NAY
-              </p>
-
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                Sẵn sàng tìm người đồng hành trong hành trình học tập?
-              </h2>
-
-              <p className="mt-4 text-gray-400">
-                Tạo tài khoản miễn phí và bắt đầu kết nối với cộng đồng học
-                tập.
-              </p>
-            </div>
-
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Link
               to="/register/student"
-              className="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-brand-600/20 transition-all duration-300 hover:-translate-y-1 hover:bg-brand-500 hover:shadow-xl"
+              className="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-brand-600/30 transition-all hover:bg-brand-500"
             >
-              Bắt đầu ngay
-              <span className="transition-transform duration-300 group-hover:translate-x-1">
-                →
-              </span>
+              🎓 Đăng ký Học viên →
+            </Link>
+            <Link
+              to="/login"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-700 bg-slate-800 px-5 py-3.5 text-sm font-bold text-slate-200 transition-all hover:bg-slate-700"
+            >
+              🔑 Đăng nhập
             </Link>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </section>
-  )
-}
-
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: string
-  title: string
-  description: string
-}) {
-  return (
-    <Card className="group relative overflow-hidden border-gray-100 p-7 transition-all duration-300 hover:-translate-y-2 hover:border-brand-100 hover:shadow-xl">
-      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-2xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-brand-100">
-        {icon}
-      </div>
-
-      <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-
-      <p className="mt-3 text-sm leading-6 text-gray-500">{description}</p>
-
-      <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-brand-600">
-        Tìm hiểu thêm
-        <span className="transition-transform duration-300 group-hover:translate-x-1">
-          →
-        </span>
-      </div>
-
-      <div className="absolute -bottom-16 -right-16 h-32 w-32 rounded-full bg-brand-50/70 transition-transform duration-500 group-hover:scale-150" />
-    </Card>
   )
 }
