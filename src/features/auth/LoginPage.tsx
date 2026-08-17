@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from './auth.store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Card } from '@/components/ui/Card'
 
 interface LocationState {
   from?: { pathname: string }
@@ -16,7 +15,7 @@ export function LoginPage() {
   const location = useLocation()
   const { login, status, error } = useAuthStore()
 
-  const [email, setEmail] = useState('demo@example.com')
+  const [email, setEmail] = useState('admin@tutor.com')
   const [password, setPassword] = useState('password')
 
   const redirectTo = (location.state as LocationState)?.from?.pathname ?? '/'
@@ -36,11 +35,73 @@ export function LoginPage() {
     }
   }
 
+  const fillDemo = (roleEmail: string) => {
+    setEmail(roleEmail)
+    setPassword('password')
+  }
+
   return (
-    <div className="flex min-h-full items-center justify-center p-4">
-      <Card className="w-full max-w-sm p-6">
-        <h1 className="text-xl font-semibold">{t('auth.login')}</h1>
-        <p className="mt-1 text-sm text-gray-500">{t('auth.signInToContinue')}</p>
+    <div className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden bg-slate-50 dark:bg-slate-950">
+      {/* Background Orbs */}
+      <div aria-hidden="true" className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+
+      <div className="relative w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 sm:p-10">
+        <div className="flex flex-col items-center text-center">
+          <Link to="/" className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-2xl text-white shadow-xl shadow-brand-600/30">
+            🎓
+          </Link>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+            {t('auth.login')}
+          </h1>
+          <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            Chào mừng bạn quay trở lại với GiaSưConnect
+          </p>
+        </div>
+
+        {/* Quick Demo Role Picker */}
+        <div className="mt-6 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block text-center mb-2">
+            Thao tác nhanh Demo:
+          </span>
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              type="button"
+              onClick={() => fillDemo('admin@tutor.com')}
+              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                email.startsWith('admin')
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              👑 Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemo('tutor@demo.com')}
+              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                email.startsWith('tutor')
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              👨‍🏫 Gia sư
+            </button>
+            <button
+              type="button"
+              onClick={() => fillDemo('student@demo.com')}
+              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                email.startsWith('student')
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              🎓 Học viên
+            </button>
+          </div>
+
+        </div>
+
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
           <Input
             label={t('auth.email')}
@@ -49,6 +110,7 @@ export function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+
           <Input
             label={t('auth.password')}
             type="password"
@@ -56,15 +118,38 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+
+          <div className="flex items-center justify-between text-xs">
+            <label className="flex items-center gap-2 cursor-pointer text-slate-500">
+              <input type="checkbox" defaultChecked className="rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+              Ghi nhớ đăng nhập
+            </label>
+            <Link
+              to="/forgot-password"
+              className="font-bold text-brand-600 hover:underline dark:text-brand-400"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+
           {error && (
-            <p className="text-sm text-red-600">{t('auth.invalidCredentials')}</p>
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold text-center">
+              {t('auth.invalidCredentials')}
+            </div>
           )}
-          <Button type="submit" loading={status === 'loading'}>
+
+          <Button type="submit" variant="gradient" size="lg" loading={status === 'loading'} className="mt-2 w-full">
             {t('auth.login')}
           </Button>
-          <p className="text-center text-xs text-gray-400">demo@example.com / password</p>
+
+          <div className="mt-4 text-center text-xs text-slate-500">
+            Chưa có tài khoản?{' '}
+            <Link to="/register/student" className="font-bold text-brand-600 hover:underline dark:text-brand-400">
+              Đăng ký ngay
+            </Link>
+          </div>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }

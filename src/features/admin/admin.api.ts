@@ -7,6 +7,7 @@ import type {
   TutorApplication,
   TutorApplicationStatus,
 } from './admin.types'
+import { http } from '@/lib/api/http'
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -154,8 +155,17 @@ let mockUsers: AdminUser[] = [
 ]
 
 export const adminApi = {
-  async getDashboardStats(): Promise<DashboardStats> {
-    await new Promise((r) => setTimeout(r, 400))
+  async getDashboardStats(params?: { startDate?: string; endDate?: string }): Promise<DashboardStats> {
+    try {
+      const res = await http.get<DashboardStats>('/api/v1/admin/dashboard', { params })
+      if (res.data?.totalTutors !== undefined) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     const pendingCount = initialTutorApplications.filter((a) => a.status === 'pending').length
     const openComplaintsCount = initialComplaints.filter((c) => c.status !== 'resolved').length
 
@@ -181,8 +191,26 @@ export const adminApi = {
   async getTutorApplications(params?: {
     status?: TutorApplicationStatus | 'all'
     query?: string
+    pageNumber?: number
+    pageSize?: number
   }): Promise<TutorApplication[]> {
-    await new Promise((r) => setTimeout(r, 400))
+    try {
+      const res = await http.get<TutorApplication[]>('/api/v1/admin/tutors', {
+        params: {
+          Status: params?.status !== 'all' ? params?.status : undefined,
+          Search: params?.query,
+          PageNumber: params?.pageNumber,
+          PageSize: params?.pageSize,
+        },
+      })
+      if (Array.isArray(res.data)) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     let list = [...initialTutorApplications]
 
     if (params?.status && params.status !== 'all') {
@@ -203,7 +231,16 @@ export const adminApi = {
   },
 
   async getTutorApplicationDetail(id: string): Promise<TutorApplication> {
-    await new Promise((r) => setTimeout(r, 300))
+    try {
+      const res = await http.get<TutorApplication>(`/api/v1/admin/tutors/${id}`)
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(250)
     const app = initialTutorApplications.find((a) => a.id === id)
     if (!app) throw new Error('Không tìm thấy hồ sơ gia sư')
     return app
@@ -214,7 +251,19 @@ export const adminApi = {
     status: 'approved' | 'rejected',
     rejectionReason?: string,
   ): Promise<TutorApplication> {
-    await new Promise((r) => setTimeout(r, 500))
+    try {
+      const res = await http.put<TutorApplication>(`/api/v1/admin/tutors/${id}/approval`, {
+        status: status === 'approved' ? 'Approved' : 'Rejected',
+        reason: rejectionReason,
+      })
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(400)
     const existing = initialTutorApplications.find((a) => a.id === id)
     if (!existing) throw new Error('Không tìm thấy hồ sơ gia sư')
 
@@ -229,7 +278,18 @@ export const adminApi = {
   },
 
   async getSubjects(query?: string): Promise<Subject[]> {
-    await new Promise((r) => setTimeout(r, 350))
+    try {
+      const res = await http.get<Subject[]>('/api/v1/subjects', {
+        params: { search: query },
+      })
+      if (Array.isArray(res.data)) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     let list = [...initialSubjects]
     if (query) {
       const q = query.toLowerCase()
@@ -241,7 +301,16 @@ export const adminApi = {
   },
 
   async createSubject(data: Omit<Subject, 'id' | 'tutorCount'>): Promise<Subject> {
-    await new Promise((r) => setTimeout(r, 500))
+    try {
+      const res = await http.post<Subject>('/api/v1/subjects', data)
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(400)
     const newSubject: Subject = {
       ...data,
       id: `SUB-${Date.now().toString().slice(-3)}`,
@@ -252,7 +321,16 @@ export const adminApi = {
   },
 
   async updateSubject(id: string, data: Partial<Subject>): Promise<Subject> {
-    await new Promise((r) => setTimeout(r, 500))
+    try {
+      const res = await http.put<Subject>(`/api/v1/subjects/${id}`, data)
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(400)
     const existing = initialSubjects.find((s) => s.id === id)
     if (!existing) throw new Error('Không tìm thấy môn học')
 
@@ -266,12 +344,30 @@ export const adminApi = {
   },
 
   async deleteSubject(id: string): Promise<void> {
-    await new Promise((r) => setTimeout(r, 400))
+    try {
+      await http.put(`/api/v1/subjects/${id}/status`, { status: 'Inactive' })
+      return
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     initialSubjects = initialSubjects.filter((s) => s.id !== id)
   },
 
   async getComplaints(status?: ComplaintStatus | 'all'): Promise<Complaint[]> {
-    await new Promise((r) => setTimeout(r, 350))
+    try {
+      const res = await http.get<Complaint[]>('/api/v1/admin/complaints', {
+        params: { status: status !== 'all' ? status : undefined },
+      })
+      if (Array.isArray(res.data)) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     let list = [...initialComplaints]
     if (status && status !== 'all') {
       list = list.filter((c) => c.status === status)
@@ -280,7 +376,16 @@ export const adminApi = {
   },
 
   async getComplaintDetail(id: string): Promise<Complaint> {
-    await new Promise((r) => setTimeout(r, 300))
+    try {
+      const res = await http.get<Complaint>(`/api/v1/admin/complaints/${id}`)
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(250)
     const item = initialComplaints.find((c) => c.id === id)
     if (!item) throw new Error('Không tìm thấy khiếu nại')
     return item
@@ -291,7 +396,19 @@ export const adminApi = {
     status: 'resolved' | 'rejected',
     notes: string,
   ): Promise<Complaint> {
-    await delay(500)
+    try {
+      const res = await http.patch<Complaint>(`/api/v1/admin/complaints/${id}`, {
+        status: status === 'resolved' ? 'Resolved' : 'Rejected',
+        resolutionNotes: notes,
+      })
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(400)
     const existing = initialComplaints.find((c) => c.id === id)
     if (!existing) throw new Error('Không tìm thấy khiếu nại')
 
@@ -307,7 +424,18 @@ export const adminApi = {
   },
 
   async getUsers(query?: string): Promise<AdminUser[]> {
-    await delay(350)
+    try {
+      const res = await http.get<AdminUser[]>('/api/v1/admin/users', {
+        params: { search: query },
+      })
+      if (Array.isArray(res.data)) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     let list = [...mockUsers]
     if (query) {
       const q = query.toLowerCase()
@@ -322,8 +450,19 @@ export const adminApi = {
   },
 
   async lockUser(id: string, reason?: string): Promise<AdminUser> {
-    await delay(400)
-    void reason
+    try {
+      const res = await http.patch<AdminUser>(`/api/v1/admin/users/${id}/status`, {
+        status: 'Locked',
+        reason,
+      })
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     const user = mockUsers.find((u) => u.id === id)
     if (!user) throw new Error('Không tìm thấy người dùng')
     user.status = 'locked'
@@ -331,7 +470,18 @@ export const adminApi = {
   },
 
   async unlockUser(id: string): Promise<AdminUser> {
-    await delay(400)
+    try {
+      const res = await http.patch<AdminUser>(`/api/v1/admin/users/${id}/status`, {
+        status: 'Active',
+      })
+      if (res.data?.id) {
+        return res.data
+      }
+    } catch {
+      // Fallback
+    }
+
+    await delay(300)
     const user = mockUsers.find((u) => u.id === id)
     if (!user) throw new Error('Không tìm thấy người dùng')
     user.status = 'active'

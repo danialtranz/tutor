@@ -121,15 +121,15 @@ export function SubjectsPage() {
     {
       key: 'code',
       header: 'Mã Môn',
-      render: (row) => <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">{row.code}</span>,
+      render: (row) => <span className="font-mono text-xs font-bold text-brand-600 dark:text-brand-400">{row.code}</span>,
     },
     {
       key: 'name',
       header: 'Tên Môn Học',
       render: (row) => (
         <div>
-          <p className="font-bold text-gray-900 dark:text-gray-100">{row.name}</p>
-          <span className="text-xs text-gray-500">{row.description}</span>
+          <p className="font-bold text-slate-900 dark:text-slate-100">{row.name}</p>
+          <span className="text-xs text-slate-500">{row.description}</span>
         </div>
       ),
     },
@@ -137,28 +137,28 @@ export function SubjectsPage() {
       key: 'category',
       header: 'Danh Mục',
       render: (row) => (
-        <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">
-          {row.category}
+        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold border border-slate-200/60 dark:border-slate-700">
+          🏷️ {row.category}
         </span>
       ),
     },
     {
       key: 'tutorCount',
       header: 'Số Gia Sư',
-      render: (row) => <span className="text-xs font-semibold">{row.tutorCount} gia sư</span>,
+      render: (row) => <span className="text-xs font-bold text-slate-800 dark:text-slate-200">👨‍🏫 {row.tutorCount} gia sư</span>,
     },
     {
       key: 'status',
       header: 'Trạng Thái',
       render: (row) => (
         <span
-          className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+          className={`px-3 py-1 rounded-full text-xs font-bold ${
             row.status === 'active'
-              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-              : 'bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60'
+              : 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-300/60'
           }`}
         >
-          {row.status === 'active' ? 'Đang mở' : 'Đã ẩn / Đóng'}
+          {row.status === 'active' ? '● Đang mở' : '○ Đã khóa'}
         </span>
       ),
     },
@@ -168,10 +168,10 @@ export function SubjectsPage() {
       render: (row) => (
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => handleOpenEdit(row)}>
-            Sửa
+            ✏️ Sửa
           </Button>
           <Button size="sm" variant="danger" onClick={() => setDeletingSubject(row)}>
-            Xóa
+            🗑️ Xóa
           </Button>
         </div>
       ),
@@ -181,22 +181,22 @@ export function SubjectsPage() {
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            Quản lý Danh mục Môn Học
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+            Quản lý Môn học
           </h2>
-          <p className="text-xs text-gray-500">Thêm mới, chỉnh sửa thông tin và bật/tắt môn học trong hệ thống</p>
+          <p className="text-xs text-slate-500 mt-1">Cấu hình danh mục môn học, học phí tham chiếu và trạng thái hiển thị trên hệ thống</p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Input
-            placeholder="Tìm môn học..."
+            placeholder="🔍 Tìm môn học..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-64"
           />
-          <Button onClick={handleOpenCreate} className="shrink-0">
+          <Button variant="gradient" onClick={handleOpenCreate} className="shrink-0">
             + Thêm Môn Học
           </Button>
         </div>
@@ -249,7 +249,7 @@ export function SubjectsPage() {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+            <label className="text-sm font-bold text-slate-700 dark:text-slate-200">
               Mô tả chi tiết môn học
             </label>
             <textarea
@@ -257,7 +257,7 @@ export function SubjectsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Nhập tóm tắt nội dung môn học..."
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
             />
           </div>
 
@@ -271,11 +271,11 @@ export function SubjectsPage() {
             ]}
           />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
               Hủy
             </Button>
-            <Button type="submit" loading={isSubmitting}>
+            <Button type="submit" variant="gradient" loading={isSubmitting}>
               {editingSubject ? 'Lưu cập nhật' : 'Tạo môn học mới'}
             </Button>
           </div>
@@ -289,7 +289,7 @@ export function SubjectsPage() {
           onClose={() => setDeletingSubject(null)}
           onConfirm={handleDeleteConfirm}
           title="Xác nhận xóa môn học"
-          message={`Bạn có chắc chắn muốn xóa môn học "${deletingSubject.name}" (${deletingSubject.code})? Hành động này sẽ ẩn môn học khỏi hệ thống.`}
+          message={`Bạn có chắc chắn muốn xóa môn học "${deletingSubject.name}" (${deletingSubject.code})? Hành động này sẽ chuyển trạng thái môn học sang Đã ẩn.`}
           confirmText="Xóa Môn Học"
           isLoading={isDeleting}
         />

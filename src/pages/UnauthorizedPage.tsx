@@ -1,27 +1,33 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
+import { useAuthStore } from '@/features/auth/auth.store'
 
 export function UnauthorizedPage() {
+  const navigate = useNavigate()
+  const { user, logout } = useAuthStore()
+
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-6 p-8 text-center">
-      <p className="text-6xl font-black text-rose-600">403</p>
-      <h1 className="text-2xl font-semibold text-gray-900">Không có quyền truy cập</h1>
-      <p className="max-w-xl text-sm text-gray-500">
-        Bạn không có quyền để truy cập trang này. Vui lòng đăng nhập bằng tài khoản có vai trò phù hợp hoặc quay về trang chủ.
+    <div className="flex min-h-[70vh] flex-col items-center justify-center p-4 text-center">
+      <div className="mb-4 text-6xl">🚫</div>
+      <h1 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-2">403 — Không có quyền truy cập</h1>
+      <p className="text-base text-gray-600 dark:text-gray-400 max-w-md mb-6">
+        Tài khoản của bạn {user?.email ? `(${user.email}${user.role ? ` - ${user.role}` : ''})` : ''} không có quyền truy cập vào trang này. Vui lòng quay lại hoặc đăng nhập bằng tài khoản khác.
       </p>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Link
-          to="/"
-          className="rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+      <div className="flex items-center gap-3">
+        <Button variant="outline" onClick={() => navigate('/')}>
+          Trang chủ
+        </Button>
+        <Button
+          variant="danger"
+          onClick={() => {
+            logout()
+            navigate('/login')
+          }}
         >
-          Về trang chủ
-        </Link>
-        <Link
-          to="/login"
-          className="rounded-full border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-100"
-        >
-          Đăng nhập lại
-        </Link>
+          Đăng xuất & Đổi tài khoản
+        </Button>
       </div>
     </div>
   )
 }
+

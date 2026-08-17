@@ -3,7 +3,6 @@ import { adminApi } from './admin.api'
 import type { TutorApplication, TutorApplicationStatus } from './admin.types'
 import { Table, type Column } from '@/components/ui/Table'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/ToastContext'
@@ -82,15 +81,20 @@ export function TutorApplicationsPage() {
     {
       key: 'id',
       header: 'Mã hồ sơ',
-      render: (row) => <span className="font-mono text-xs font-semibold text-gray-500">{row.id}</span>,
+      render: (row) => <span className="font-mono text-xs font-bold text-slate-400">{row.id}</span>,
     },
     {
       key: 'fullName',
       header: 'Họ và tên gia sư',
       render: (row) => (
-        <div>
-          <p className="font-bold text-gray-900 dark:text-gray-100">{row.fullName}</p>
-          <span className="text-xs text-gray-500">{row.email} • {row.phone}</span>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+            {row.fullName.charAt(0)}
+          </div>
+          <div>
+            <p className="font-bold text-slate-900 dark:text-slate-100">{row.fullName}</p>
+            <span className="text-xs text-slate-500">{row.email} • {row.phone}</span>
+          </div>
         </div>
       ),
     },
@@ -99,9 +103,9 @@ export function TutorApplicationsPage() {
       header: 'Trình độ & Bằng cấp',
       render: (row) => (
         <div>
-          <p className="text-xs font-medium text-gray-800 dark:text-gray-200">{row.qualification}</p>
-          <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-            {row.experienceYears} năm kinh nghiệm
+          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{row.qualification}</p>
+          <span className="text-xs text-brand-600 dark:text-brand-400 font-bold">
+            ⭐ {row.experienceYears} năm kinh nghiệm
           </span>
         </div>
       ),
@@ -111,18 +115,18 @@ export function TutorApplicationsPage() {
       header: 'Trạng thái',
       render: (row) => {
         const statusMap = {
-          pending: { label: 'Chờ duyệt', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300' },
-          approved: { label: 'Đã duyệt', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' },
-          rejected: { label: 'Từ chối', cls: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' },
+          pending: { label: 'Chờ duyệt', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60' },
+          approved: { label: 'Đã duyệt', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60' },
+          rejected: { label: 'Từ chối', cls: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60' },
         }
         const s = statusMap[row.status]
-        return <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${s.cls}`}>{s.label}</span>
+        return <span className={`px-3 py-1 rounded-full text-xs font-bold ${s.cls}`}>{s.label}</span>
       },
     },
     {
       key: 'createdAt',
       header: 'Ngày gửi',
-      render: (row) => <span className="text-xs text-gray-500">{row.createdAt}</span>,
+      render: (row) => <span className="text-xs text-slate-500 font-medium">{row.createdAt}</span>,
     },
     {
       key: 'actions',
@@ -142,6 +146,7 @@ export function TutorApplicationsPage() {
           {row.status === 'pending' && (
             <Button
               size="sm"
+              variant="gradient"
               onClick={() => handleApprove(row)}
             >
               Duyệt
@@ -152,35 +157,47 @@ export function TutorApplicationsPage() {
     },
   ]
 
+  const statusFilterOptions: { label: string; value: TutorApplicationStatus | 'all' }[] = [
+    { label: 'Tất cả hồ sơ', value: 'all' },
+    { label: '⏳ Chờ duyệt', value: 'pending' },
+    { label: '✅ Đã duyệt', value: 'approved' },
+    { label: '❌ Từ chối', value: 'rejected' },
+  ]
+
   return (
     <div className="space-y-6">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            Danh sách Hồ sơ Gia sư chờ duyệt
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+            Duyệt hồ sơ Gia sư
           </h2>
-          <p className="text-xs text-gray-500">Xem thông tin cá nhân, bằng cấp và quyết định duyệt hồ sơ gia sư</p>
+          <p className="text-xs text-slate-500 mt-1">Thẩm định thông tin chuyên môn, bằng cấp chứng chỉ trước khi hiển thị gia sư</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
           <Input
-            placeholder="Tìm kiếm tên, email, trình độ..."
+            placeholder="🔍 Tìm theo tên, email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-64"
           />
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as TutorApplicationStatus | 'all')}
-            options={[
-              { label: 'Tất cả trạng thái', value: 'all' },
-              { label: 'Chờ duyệt', value: 'pending' },
-              { label: 'Đã duyệt', value: 'approved' },
-              { label: 'Từ chối', value: 'rejected' },
-            ]}
-            className="w-full sm:w-44"
-          />
+
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/70 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 w-full sm:w-auto overflow-x-auto">
+            {statusFilterOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setStatusFilter(opt.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  statusFilter === opt.value
+                    ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-900 dark:text-brand-400'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -201,7 +218,7 @@ export function TutorApplicationsPage() {
             setIsDetailModalOpen(false)
             setSelectedApp(null)
           }}
-          title={`Chi tiết Hồ sơ Gia sư — ${selectedApp.fullName}`}
+          title={`Hồ sơ Gia sư — ${selectedApp.fullName}`}
           size="lg"
           footer={
             <>
@@ -217,6 +234,7 @@ export function TutorApplicationsPage() {
                     Từ chối hồ sơ
                   </Button>
                   <Button
+                    variant="gradient"
                     loading={isActionLoading}
                     onClick={() => handleApprove(selectedApp)}
                   >
@@ -227,75 +245,75 @@ export function TutorApplicationsPage() {
             </>
           }
         >
-          <div className="space-y-6 text-sm text-gray-800 dark:text-gray-200">
-            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800">
+          <div className="space-y-6 text-sm text-slate-800 dark:text-slate-200">
+            <div className="grid grid-cols-2 gap-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/70 dark:border-slate-800">
               <div>
-                <span className="text-xs font-medium text-gray-500">Mã hồ sơ:</span>
-                <p className="font-semibold">{selectedApp.id}</p>
+                <span className="text-xs font-medium text-slate-400">Mã hồ sơ:</span>
+                <p className="font-bold text-brand-600">{selectedApp.id}</p>
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500">Họ và tên:</span>
-                <p className="font-semibold">{selectedApp.fullName}</p>
+                <span className="text-xs font-medium text-slate-400">Họ và tên:</span>
+                <p className="font-bold">{selectedApp.fullName}</p>
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500">Email:</span>
+                <span className="text-xs font-medium text-slate-400">Email liên hệ:</span>
                 <p className="font-semibold">{selectedApp.email}</p>
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500">Số điện thoại:</span>
+                <span className="text-xs font-medium text-slate-400">Số điện thoại:</span>
                 <p className="font-semibold">{selectedApp.phone}</p>
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500">Trình độ đào tạo:</span>
+                <span className="text-xs font-medium text-slate-400">Trình độ đào tạo:</span>
                 <p className="font-semibold">{selectedApp.qualification}</p>
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-500">Kinh nghiệm:</span>
+                <span className="text-xs font-medium text-slate-400">Số năm kinh nghiệm:</span>
                 <p className="font-semibold">{selectedApp.experienceYears} năm</p>
               </div>
             </div>
 
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">
                 Môn học đăng ký giảng dạy
               </h4>
               <div className="flex flex-wrap gap-2">
                 {selectedApp.subjects.map((sub) => (
                   <span
                     key={sub}
-                    className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-semibold"
+                    className="px-3.5 py-1.5 bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200/60 rounded-xl text-xs font-bold"
                   >
-                    {sub}
+                    📚 {sub}
                   </span>
                 ))}
               </div>
             </div>
 
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                Giới thiệu & Phương pháp dạy
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">
+                Giới thiệu bản thân & Phương pháp dạy
               </h4>
-              <p className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl text-xs leading-relaxed">
+              <p className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl text-xs leading-relaxed border border-slate-200/60 dark:border-slate-800">
                 {selectedApp.bio}
               </p>
             </div>
 
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                Bằng cấp & Chứng chỉ đính kèm
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">
+                Bằng cấp & Chứng chỉ minh chứng
               </h4>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {selectedApp.degrees.map((deg, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-800 rounded-xl text-xs"
+                    className="flex items-center justify-between p-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs bg-white dark:bg-slate-900"
                   >
-                    <div className="flex items-center gap-2">
-                      <span>📜</span>
-                      <span className="font-medium">{deg.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">📜</span>
+                      <span className="font-bold">{deg.name}</span>
                     </div>
-                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded">
-                      Đã đối chiếu
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200">
+                      ✓ Đã xác thực
                     </span>
                   </div>
                 ))}
@@ -303,7 +321,7 @@ export function TutorApplicationsPage() {
             </div>
 
             {selectedApp.status === 'rejected' && selectedApp.rejectionReason && (
-              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-2xl">
                 <span className="text-xs font-bold text-rose-700 dark:text-rose-300">Lý do từ chối trước đó:</span>
                 <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{selectedApp.rejectionReason}</p>
               </div>
@@ -316,7 +334,7 @@ export function TutorApplicationsPage() {
       <Modal
         isOpen={isRejectModalOpen}
         onClose={() => setIsRejectModalOpen(false)}
-        title="Nhập lý do Từ chối hồ sơ gia sư"
+        title="Từ chối hồ sơ gia sư"
         size="sm"
         footer={
           <>
@@ -333,16 +351,16 @@ export function TutorApplicationsPage() {
           </>
         }
       >
-        <div className="space-y-3">
-          <p className="text-xs text-gray-500">
-            Vui lòng ghi rõ lý do từ chối để hệ thống tự động gửi thông báo phản hồi cho gia sư.
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500">
+            Vui lòng nhập rõ lý do từ chối để hệ thống phản hồi cho gia sư.
           </p>
           <textarea
             rows={4}
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="Ví dụ: Bằng cấp đính kèm mờ không rõ nét, vui lòng cập nhật lại..."
-            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+            placeholder="Ví dụ: Bằng cấp đính kèm không hợp lệ..."
+            className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
           />
         </div>
       </Modal>
