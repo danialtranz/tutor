@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { RoleBasedRoute } from '@/features/auth/RoleBasedRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage'
+import StudentLayout from '@/components/layout/StudentLayout'
 
 // Lazy loading pages
 const HomePage = lazy(() =>
@@ -17,25 +18,37 @@ const LoginPage = lazy(() =>
   import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
 const StudentRegisterPage = lazy(() =>
-  import('@/features/auth/StudentRegisterPage').then((m) => ({ default: m.StudentRegisterPage })),
+  import('@/features/auth/StudentRegisterPage').then((m) => ({
+    default: m.StudentRegisterPage,
+  })),
 )
 const TutorRegisterPage = lazy(() =>
-  import('@/features/auth/TutorRegisterPage').then((m) => ({ default: m.TutorRegisterPage })),
+  import('@/features/auth/TutorRegisterPage').then((m) => ({
+    default: m.TutorRegisterPage,
+  })),
 )
 const ForgotPasswordPage = lazy(() =>
-  import('@/features/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })),
+  import('@/features/auth/ForgotPasswordPage').then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
 )
 const ResetPasswordPage = lazy(() =>
-  import('@/features/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
+  import('@/features/auth/ResetPasswordPage').then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
 )
 const AdminLayout = lazy(() =>
   import('@/features/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
 )
 const AdminDashboardPage = lazy(() =>
-  import('@/features/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })),
+  import('@/features/admin/AdminDashboardPage').then((m) => ({
+    default: m.AdminDashboardPage,
+  })),
 )
 const TutorApplicationsPage = lazy(() =>
-  import('@/features/admin/TutorApplicationsPage').then((m) => ({ default: m.TutorApplicationsPage })),
+  import('@/features/admin/TutorApplicationsPage').then((m) => ({
+    default: m.TutorApplicationsPage,
+  })),
 )
 const SubjectsPage = lazy(() =>
   import('@/features/admin/SubjectsPage').then((m) => ({ default: m.SubjectsPage })),
@@ -44,9 +57,32 @@ const ComplaintsPage = lazy(() =>
   import('@/features/admin/ComplaintsPage').then((m) => ({ default: m.ComplaintsPage })),
 )
 const UsersManagementPage = lazy(() =>
-  import('@/features/admin/UsersManagementPage').then((m) => ({ default: m.UsersManagementPage })),
+  import('@/features/admin/UsersManagementPage').then((m) => ({
+    default: m.UsersManagementPage,
+  })),
 )
-
+// Student Pages
+const StudentDashboardPage = lazy(
+  () => import('@/features/student/pages/StudentDashboardPage'),
+)
+const StudentSchedulePage = lazy(
+  () => import('@/features/student/pages/StudentSchedulePage'),
+)
+const StudentFindTutorPage = lazy(
+  () => import('@/features/student/pages/StudentFindTutorPage'),
+)
+const StudentProgressPage = lazy(
+  () => import('@/features/student/pages/StudentProgressPage'),
+)
+const StudentProfilePage = lazy(
+  () => import('@/features/student/pages/StudentProfilePage'),
+)
+const StudentComplaintsPage = lazy(
+  () => import('@/features/student/pages/StudentComplaintsPage'),
+)
+const StudentScheduleDetailPage = lazy(
+  () => import('@/features/student/pages/StudentScheduleDetailPage'),
+)
 export const router = createBrowserRouter([
   // Public Auth Routes
   { path: '/login', element: <LoginPage /> },
@@ -71,7 +107,10 @@ export const router = createBrowserRouter([
                 element: <AdminLayout />,
                 children: [
                   { path: 'admin/dashboard', element: <AdminDashboardPage /> },
-                  { path: 'admin/tutor-applications', element: <TutorApplicationsPage /> },
+                  {
+                    path: 'admin/tutor-applications',
+                    element: <TutorApplicationsPage />,
+                  },
                   { path: 'admin/subjects', element: <SubjectsPage /> },
                   { path: 'admin/complaints', element: <ComplaintsPage /> },
                   { path: 'admin/users', element: <UsersManagementPage /> },
@@ -83,7 +122,25 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: 'student',
+    element: <StudentLayout />,
+    children: [
+      { index: true, element: <StudentDashboardPage /> }, // /student
 
+      { path: 'dashboard', element: <StudentDashboardPage /> },
+
+      { path: 'tutors', element: <StudentFindTutorPage /> },
+
+      { path: 'schedule', element: <StudentSchedulePage /> },
+      { path: 'schedule/:id', element: <StudentScheduleDetailPage /> },
+      { path: 'progress', element: <StudentProgressPage /> },
+
+      { path: 'complaints', element: <StudentComplaintsPage /> },
+
+      { path: 'profile', element: <StudentProfilePage /> },
+    ],
+  },
   // 404 Fallback
   { path: '*', element: <NotFoundPage /> },
 ])

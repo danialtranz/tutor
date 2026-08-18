@@ -1,0 +1,413 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { studentApi } from '@/features/student/api/studentApi'
+import { Calendar, Star, X, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
+import type { Booking, BookingStatus } from '../types/booking.types'
+
+export default function StudentSchedulePage() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState<number | null>(
+    null,
+  )
+  const [rating, setRating] = useState<number>(5)
+  const [comment, setComment] = useState<string>('')
+
+  // 💡 Lấy danh sách booking và unwrap đúng mảng data
+  const {
+    data: bookings = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['my-bookings'],
+    queryFn: () => studentApi.getBookings(),
+    select: (response: any) => {
+      // Xử lý linh hoạt mọi kiểu trả về từ Backend
+      if (Array.isArray(response)) return response
+      if (Array.isArray(response?.data)) return response.data
+      if (Array.isArray(response?.data?.data)) return response.data.data
+      return []
+    },
+  })
+
+  const reviewMutation = useMutation({
+    mutationFn: ({
+      bookingId,
+      rating,
+      comment,
+    }: {
+      bookingId: number
+      rating: number
+      comment: string
+    }) =>
+      studentApi.createReview(bookingId, {
+        rating,
+        comment,
+      }),
+
+    onSuccess: () => {
+      setSelectedBookingForReview(null)
+      setComment('')
+      setRating(5)
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
+    },
+  })
+
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (selectedBookingForReview !== null) {
+      reviewMutation.mutate({
+        bookingId: selectedBookingForReview,
+        rating,
+        comment,
+      })
+    }
+  }
+
+  const getStatusBadge = (status: BookingStatus | string | number) => {
+    const s = status?.toString().toLowerCase()
+
+    switch (s) {
+      case 'confirmed':
+      case '2':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+            <CheckCircle2 className="h-3 w-3" /> Đã xác nhận
+          </span>
+        )
+
+      case 'pending':
+      case '0':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+            <RefreshCw className="h-3 w-3 animate-spin" /> Chờ xử lý
+          </span>
+        )
+
+      case 'completed':
+      case '5':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+            <CheckCircle2 className="h-3 w-3" /> Hoàn thành
+          </span>
+        )
+
+      case 'cancelled':
+      case '4':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+            Đã hủy
+          </span>
+        )
+
+      case 'rejected':
+      case '2':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+            <AlertCircle className="h-3 w-3" /> Từ chối
+          </span>
+        )
+
+      default:
+        return (
+          <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+            {status ?? 'N/A'}
+          </span>
+        )
+    }
+  }
+
+  const formatDate = (utcString: string) => {
+    if (!utcString) return 'N/A'
+    try {
+      return new Date(utcString).toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } catch {
+      return utcString
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div>
+        <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100">
+          Quản lý Lịch học
+        </h1>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Theo dõi các buổi học sắp tới, lịch sử đăng ký và đánh giá chất lượng gia sư.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="p-12 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+          Đang tải lịch học...
+        </div>
+      ) : isError ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center text-sm text-rose-600 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-400">
+          Có lỗi xảy ra khi lấy danh sách lịch học. Vui lòng thử lại sau!
+        </div>
+      ) : bookings.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 p-12 text-center text-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
+          Bạn chưa có lịch học nào trong hệ thống.
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xs dark:border-gray-800 dark:bg-gray-900">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-semibold tracking-wider text-gray-400 uppercase dark:border-gray-800 dark:bg-gray-950/50">
+                  <th className="p-4">Thông tin buổi học</th>
+                  <th className="p-4">Thời gian học</th>
+                  <th className="p-4">Học phí (Credit)</th>
+                  <th className="p-4">Trạng thái</th>
+                  <th className="p-4 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm dark:divide-gray-800">
+                {bookings.map((item: Booking) => {
+                  const start = new Date(item.startTimeUtc).getTime()
+                  const end = new Date(item.endTimeUtc).getTime()
+                  const durationMinutes = Math.round((end - start) / (1000 * 60))
+                  const statusNormalized = item.status?.toString().toLowerCase()
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className="transition hover:bg-gray-50/50 dark:hover:bg-gray-800/50"
+                    >
+                      {/* CỘT 1: Thông tin môn học & Ghi chú */}
+                      <td className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+                            #{item.tutorSubjectId ?? item.id}
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900 dark:text-gray-100">
+                                Lớp học #{item.id}
+                              </span>
+                              {/* <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                Môn #{item.tutorSubjectId}
+                              </span> */}
+                            </div>
+
+                            {item.studentNote ? (
+                              <p className="line-clamp-1 text-xs text-gray-500 italic dark:text-gray-400">
+                                "{item.studentNote}"
+                              </p>
+                            ) : (
+                              <p className="text-xs text-gray-400">Không có ghi chú</p>
+                            )}
+
+                            {/* 💡 Chuyển status về toLowerCase để kiểm tra đúng với 'confirmed' hoặc '1' */}
+                            {item.meetingUrl &&
+                              (statusNormalized === 'confirmed' ||
+                                statusNormalized === '1') && (
+                                <a
+                                  href={item.meetingUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                >
+                                  🔗 Vào phòng học online
+                                </a>
+                              )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* CỘT 2: Thời gian học & Thời lượng */}
+                      <td className="p-4">
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-300">
+                            <Calendar className="h-3.5 w-3.5 text-indigo-500" />
+                            {formatDate(item.startTimeUtc)}
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <span>
+                              Thời lượng:{' '}
+                              <strong className="text-gray-600 dark:text-gray-300">
+                                {isNaN(durationMinutes) || durationMinutes <= 0
+                                  ? '--'
+                                  : `${durationMinutes} phút`}
+                              </strong>
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* CỘT 3: Credit */}
+                      <td className="p-4">
+                        <div className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                          <span>⚡ {item.creditCost ?? 0}</span>
+                          <span className="text-[10px] font-normal opacity-80">
+                            credits
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* CỘT 4: Trạng thái */}
+                      <td className="p-4">
+                        {getStatusBadge(item.status)}
+
+                        {item.statusReason && (
+                          <p className="mt-1 line-clamp-1 text-[11px] text-rose-500 italic">
+                            Lý do: {item.statusReason}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* CỘT 5: Thao tác & Chuyển hướng Chi tiết */}
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Nút Xem chi tiết chuyển sang route trang chi tiết */}
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/student/schedule/${item.id}`)}
+                            className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                          >
+                            Chi tiết
+                          </button>
+
+                          {/* Các thao tác theo trạng thái */}
+                          {(() => {
+                            if (
+                              statusNormalized === 'completed' ||
+                              statusNormalized === '4'
+                            ) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedBookingForReview(item.id)}
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-700"
+                                >
+                                  <Star className="h-3.5 w-3.5" />
+                                  Đánh giá
+                                </button>
+                              )
+                            }
+
+                            if (
+                              statusNormalized === 'pending' ||
+                              statusNormalized === 'confirmed' ||
+                              statusNormalized === '0' ||
+                              statusNormalized === '1'
+                            ) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/student/schedule/${item.id}`)}
+                                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400 dark:hover:bg-rose-900/60"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                  Hủy / Dời lịch
+                                </button>
+                              )
+                            }
+
+                            return null
+                          })()}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Đánh Giá */}
+      {selectedBookingForReview !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-xs"
+          onClick={() => setSelectedBookingForReview(null)}
+        >
+          <form
+            onSubmit={handleReviewSubmit}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-900"
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-800">
+              <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                Đánh giá gia sư
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSelectedBookingForReview(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                Số sao đánh giá (1-5)
+              </label>
+              <select
+                value={rating}
+                onChange={(e) => setRating(Number(e.target.value))}
+                className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-sm font-semibold text-amber-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:border-gray-800 dark:bg-gray-950"
+              >
+                {[5, 4, 3, 2, 1].map((s) => (
+                  <option key={s} value={s}>
+                    {s} ⭐{' '}
+                    {s === 5
+                      ? '(Xuất sắc)'
+                      : s === 4
+                        ? '(Tốt)'
+                        : s === 3
+                          ? '(Bình thường)'
+                          : s === 2
+                            ? '(Kém)'
+                            : '(Rất kém)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                Nhận xét chi tiết
+              </label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+                rows={3}
+                placeholder="Nhập cảm nhận của bạn về buổi học..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedBookingForReview(null)}
+                className="rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={reviewMutation.isPending}
+                className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {reviewMutation.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  )
+}
