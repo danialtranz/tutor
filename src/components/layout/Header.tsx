@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, NavLink } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/features/auth/auth.store'
-import { supportedLocales } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
 import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 
@@ -11,7 +9,6 @@ export interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
@@ -54,20 +51,6 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Language Switcher */}
-          <select
-            aria-label="Language"
-            value={i18n.resolvedLanguage}
-            onChange={(e) => void i18n.changeLanguage(e.target.value)}
-            className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
-          >
-            {supportedLocales.map((l) => (
-              <option key={l} value={l}>
-                🌐 {l.toUpperCase()}
-              </option>
-            ))}
-          </select>
-
           {user ? (
             <div className="flex items-center gap-3">
               {/* User badge info */}
@@ -97,12 +80,12 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  logout()
+                onClick={async () => {
+                  await logout()
                   navigate('/')
                 }}
               >
-                {t('nav.logout')}
+                Đăng xuất
               </Button>
             </div>
           ) : (

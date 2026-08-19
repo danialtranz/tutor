@@ -53,13 +53,18 @@ export function SubjectsPage() {
     setIsModalOpen(true)
   }
 
-  const handleOpenEdit = (subject: Subject) => {
-    setEditingSubject(subject)
-    setCode(subject.code)
-    setName(subject.name)
-    setDescription(subject.description)
-    setStatus(subject.status)
-    setIsModalOpen(true)
+  const handleOpenEdit = async (subject: Subject) => {
+    try {
+      const detail = await adminApi.getSubjectDetail(subject.id)
+      setEditingSubject(detail)
+      setCode(detail.code)
+      setName(detail.name)
+      setDescription(detail.description)
+      setStatus(detail.status)
+      setIsModalOpen(true)
+    } catch {
+      toast.error('Không thể tải chi tiết môn học')
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -152,7 +157,7 @@ export function SubjectsPage() {
       header: 'Thao tác',
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleOpenEdit(row)}>
+          <Button size="sm" variant="outline" onClick={() => void handleOpenEdit(row)}>
             ✏️ Sửa
           </Button>
           <Button size="sm" variant="danger" onClick={() => setDeletingSubject(row)}>

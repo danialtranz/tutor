@@ -15,17 +15,6 @@ export interface DashboardStats {
   }
 }
 
-export interface LegacyDashboardStats {
-  totalTutors: number
-  totalStudents: number
-  pendingTutorApplications: number
-  openComplaints: number
-  totalClassesBooked: number
-  monthlyRevenue: number
-  monthlyGrowthPercent: number
-  chartData: { month: string; applications: number; bookings: number }[]
-}
-
 export interface TutorApplication {
   id: string
   fullName: string
@@ -69,5 +58,6 @@ export interface AdminUser {
   name: string
   email: string
   role: 'student' | 'tutor' | 'admin'
-  status: 'active' | 'locked'
+  status: 'active' | 'locked' | 'inactive'
+  timeZoneId?: string
 }

@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from './auth.store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useToast } from '@/components/ui/ToastContext'
+import { authApi } from './auth.api'
 
 interface LocationState {
   from?: { pathname: string }
@@ -14,9 +16,11 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login, status, error } = useAuthStore()
+  const toast = useToast()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isResendingVerification, setIsResendingVerification] = useState(false)
 
   const redirectTo = (location.state as LocationState)?.from?.pathname ?? '/'
 
@@ -32,6 +36,23 @@ export function LoginPage() {
       navigate(redirectTo, { replace: true })
     } catch {
       /* error surfaced via store */
+    }
+  }
+
+  async function handleResendVerificationEmail() {
+    if (!email.trim() || !email.includes('@')) {
+      toast.warning('Vui lòng nhập địa chỉ email hợp lệ trước.')
+      return
+    }
+
+    setIsResendingVerification(true)
+    try {
+      await authApi.resendVerificationEmail({ email: email.trim() })
+      toast.success('Email xác minh đã được gửi lại. Vui lòng kiểm tra hộp thư.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể gửi lại email xác minh.')
+    } finally {
+      setIsResendingVerification(false)
     }
   }
 
@@ -89,6 +110,15 @@ export function LoginPage() {
               {t('auth.invalidCredentials')}
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => void handleResendVerificationEmail()}
+            disabled={isResendingVerification}
+            className="text-xs font-bold text-brand-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-brand-400"
+          >
+            {isResendingVerification ? 'Đang gửi lại email xác minh...' : 'Chưa xác minh email? Gửi lại email xác minh'}
+          </button>
 
           <Button type="submit" variant="gradient" size="lg" loading={status === 'loading'} className="mt-2 w-full">
             {t('auth.login')}
