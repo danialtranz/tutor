@@ -1,8 +1,10 @@
+export type UserRole = 'student' | 'tutor' | 'admin'
+
 export interface AuthUser {
   id: number
   name: string
   email: string
-  role: 'student' | 'tutor' | 'admin'
+  role: UserRole
   status: 'active' | 'locked'
   timeZoneId?: string
 }

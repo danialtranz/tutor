@@ -57,8 +57,20 @@ async function refreshSession(): Promise<void> {
   tokenStorage.set(data.accessToken, data.refreshToken)
 }
 
+// Unwrap the backend envelope { message, data, code } → return the inner `data`
+// so callers can do `res.data.accessToken` instead of `res.data.data.accessToken`.
 http.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (
+      response.data !== null &&
+      typeof response.data === 'object' &&
+      'data' in response.data &&
+      'code' in response.data
+    ) {
+      response.data = response.data.data
+    }
+    return response
+  },
   async (error: AxiosError<ApiErrorBody>) => {
     const original = error.config as InternalAxiosRequestConfig & {
       _retried?: boolean

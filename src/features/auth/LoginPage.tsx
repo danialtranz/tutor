@@ -25,11 +25,17 @@ export function LoginPage() {
     try {
       await login({ email, password })
       const currentUser = useAuthStore.getState().user
-      if (currentUser?.role === 'admin') {
-        navigate('/admin/dashboard', { replace: true })
+      if (redirectTo !== '/') {
+        navigate(redirectTo, { replace: true })
         return
       }
-      navigate(redirectTo, { replace: true })
+      if (currentUser?.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true })
+      } else if (currentUser?.role === 'tutor') {
+        navigate('/tutor/profile', { replace: true })
+      } else {
+        navigate('/', { replace: true })
+      }
     } catch {
       /* error surfaced via store */
     }

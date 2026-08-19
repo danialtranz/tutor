@@ -14,6 +14,7 @@ interface AuthState {
   status: 'idle' | 'loading' | 'error'
   error: string | null
   isAuthenticated: boolean
+  initialized: boolean
   login: (payload: LoginPayload) => Promise<void>
   logout: () => void
   initialize: () => Promise<void>
@@ -28,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
       status: 'idle',
       error: null,
       isAuthenticated: false,
+      initialized: false,
 
       async login(payload) {
         set({ status: 'loading', error: null })
@@ -69,17 +71,25 @@ export const useAuthStore = create<AuthState>()(
       async initialize() {
         const token = tokenStorage.getAccess()
         if (!token) {
-          set({ user: null, isAuthenticated: false, status: 'idle', error: null })
+          set({ user: null, isAuthenticated: false, status: 'idle', error: null, initialized: true })
+          return
+        }
+
+        // If the store already has a user (e.g. just logged in or hydrated from
+        // persist), skip the /me round-trip — the token is freshly valid.
+        const currentUser = useAuthStore.getState().user
+        if (currentUser) {
+          set({ isAuthenticated: true, status: 'idle', error: null, initialized: true })
           return
         }
 
         set({ status: 'loading', error: null })
         try {
           const user = await authApi.me()
-          set({ user, isAuthenticated: true, status: 'idle', error: null })
+          set({ user, isAuthenticated: true, status: 'idle', error: null, initialized: true })
         } catch {
           tokenStorage.clear()
-          set({ user: null, isAuthenticated: false, status: 'idle', error: null })
+          set({ user: null, isAuthenticated: false, status: 'idle', error: null, initialized: true })
         }
       },
 

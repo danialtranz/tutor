@@ -46,6 +46,12 @@ const ComplaintsPage = lazy(() =>
 const UsersManagementPage = lazy(() =>
   import('@/features/admin/UsersManagementPage').then((m) => ({ default: m.UsersManagementPage })),
 )
+const TutorProfilePage = lazy(() =>
+  import('@/pages/TutorProfile').then((m) => ({ default: m.TutorProfilePage })),
+)
+const TutorTimetablePage = lazy(() =>
+  import('@/pages/tutorTimetable').then((m) => ({ default: m.TutorTimetablePage })),
+)
 
 export const router = createBrowserRouter([
   // Public Auth Routes
@@ -64,6 +70,13 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: 'users', element: <UsersListPage /> },
+          {
+            element: <RoleBasedRoute allowedRoles={['tutor']} />,
+            children: [
+              { path: 'tutor/profile', element: <TutorProfilePage /> },
+              { path: 'tutor/timetable', element: <TutorTimetablePage /> },
+            ],
+          },
           {
             element: <RoleBasedRoute allowedRoles={['admin']} />,
             children: [
