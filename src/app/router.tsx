@@ -77,11 +77,12 @@ const StudentProgressPage = lazy(
 const StudentProfilePage = lazy(
   () => import('@/features/student/pages/StudentProfilePage'),
 )
-const StudentComplaintsPage = lazy(
-  () => import('@/features/student/pages/StudentComplaintsPage'),
-)
+
 const StudentScheduleDetailPage = lazy(
   () => import('@/features/student/pages/StudentScheduleDetailPage'),
+)
+const StudentTutorDetailPage = lazy(
+  () => import('@/features/student/pages/StudentTutorDetailPage'),
 )
 export const router = createBrowserRouter([
   // Public Auth Routes
@@ -131,12 +132,11 @@ export const router = createBrowserRouter([
       { path: 'dashboard', element: <StudentDashboardPage /> },
 
       { path: 'tutors', element: <StudentFindTutorPage /> },
+      { path: 'tutors/tutorDetail/:tutorId', element: <StudentTutorDetailPage /> },
 
       { path: 'schedule', element: <StudentSchedulePage /> },
-      { path: 'schedule/:id', element: <StudentScheduleDetailPage /> },
+      { path: 'schedule/:scheduleId', element: <StudentScheduleDetailPage /> },
       { path: 'progress', element: <StudentProgressPage /> },
-
-      { path: 'complaints', element: <StudentComplaintsPage /> },
 
       { path: 'profile', element: <StudentProfilePage /> },
     ],

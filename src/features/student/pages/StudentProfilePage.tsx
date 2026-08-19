@@ -18,16 +18,6 @@ export default function StudentProfilePage() {
     }
   }, [user])
 
-  // Update Profile Mutation
-  // const updateProfileMutation = useMutation({
-  //   mutationFn: (payload: { fullName: string; phone?: string }) =>
-  //     http.put<UserProfile>('/users/me', payload),
-  //   onSuccess: () => {
-  //     alert('Cập nhật thông tin thành công!')
-  //     queryClient.invalidateQueries({ queryKey: ['current-user'] })
-  //   },
-  // })
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // updateProfileMutation.mutate({ fullName, phone })
@@ -89,8 +79,9 @@ export default function StudentProfilePage() {
                 <input
                   type="text"
                   value={fullName}
+                  disabled
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-3 pl-9 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400"
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-3 pl-9 text-sm text-gray-900 transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
                   required
                 />
               </div>
@@ -98,7 +89,7 @@ export default function StudentProfilePage() {
 
             <div>
               <label className="mb-1.5 block text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                Email (Cố định)
+                Email
               </label>
               <div className="relative">
                 <Mail className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
@@ -121,12 +112,13 @@ export default function StudentProfilePage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-3 pl-9 text-sm text-gray-900 transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+                  disabled
+                  className="c w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pr-3 pl-9 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-800/50 dark:text-gray-400"
                   placeholder="0912345678"
                 />
               </div>
             </div>
-
+            {/* 
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
@@ -134,9 +126,8 @@ export default function StudentProfilePage() {
                 className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                {/* {updateProfileMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'} */}
               </button>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>

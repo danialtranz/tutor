@@ -1,61 +1,69 @@
-export type GoalStatus = 'NotStarted' | 'InProgress' | 'Completed' | 'Cancelled'
-
-export interface UserLite {
+export interface LearningGoal {
   id: number
-  fullName: string
-  role: 'Student' | 'Tutor' | 'Admin'
+  student: LearningGoalUser
+  tutorSubjectId: number
+  tutor: LearningGoalUser
+  subject: SubjectInfo
+  title: string
+  description: string
+  targetDate: string
+  status: number
+  currentProgressPercent: number
+  milestones?: Milestone[]
 }
 
-export interface Subject {
+export interface LearningGoalUser {
+  id: number
+  fullName: string
+  role: number
+}
+
+export interface SubjectInfo {
   id: number
   code: string
   name: string
-  description?: string | null
+  description: string
   isActive: boolean
 }
 
-export interface LearningMilestone {
+export interface Milestone {
   id: number
-  title: string
-  status: GoalStatus
-  targetDate?: string | null
-}
-
-export interface LearningGoal {
-  id: number
-  student: UserLite
-
-  tutorSubjectId: number
-  tutor?: UserLite
-
-  subject: Subject
-
-  title: string
-  description?: string | null
-  targetDate?: string | null
-
-  status: GoalStatus
-
-  currentProgressPercent?: number
-
-  milestones: LearningMilestone[]
-}
-
-export interface PagedLearningGoals {
-  items: LearningGoal[]
-
-  pageNumber: number
-  pageSize: number
-  totalItems: number
-  totalPages: number
-}
-
-export interface ProgressChartPoint {
-  date: string
-  progressPercent: number
-}
-
-export interface ProgressChart {
   learningGoalId: number
-  points: ProgressChartPoint[]
+  title: string
+  description?: string
+  targetDate: string
+  orderNumber: number
+  status: number
+}
+
+export interface CreateLearningGoalRequest {
+  studentId: number
+  tutorSubjectId: number
+  title: string
+  description: string
+  targetDate: string
+}
+
+export interface UpdateLearningGoalRequest {
+  title: string
+  description: string
+  targetDate: string
+}
+
+export interface CreateMilestoneRequest {
+  title: string
+  description: string
+  targetDate: string
+  orderNumber: number
+}
+
+export interface UpdateMilestoneRequest {
+  title: string
+  description: string
+  targetDate: string
+  orderNumber: number
+}
+
+export interface UpdateMilestoneStatusRequest {
+  status: number
 }

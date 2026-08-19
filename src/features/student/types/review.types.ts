@@ -1,24 +1,40 @@
-import type { UserLite, UserReputationSummary } from './users.type'
-import type { Pagination } from '@/types/common'
-export interface ReviewCreateRequest {
+export interface Reviewer {
+  id: number
+  fullName: string
+  role: number
+}
+
+export interface CreateReviewRequest {
   rating: number
-  comment?: string | null
+  comment: string
 }
 
 export interface Review {
   id: number
   bookingId: number
-  reviewer: UserLite
+  reviewer: Reviewer
   rating: number
-  comment?: string | null
+  comment: string
   sessionStartTimeUtc: string
 }
 
-export interface PagedReviews extends Pagination {
-  items: Review[]
+export interface ReviewSummary {
+  averageRating: number
+  reviewCount: number
+  reputationScore: number
 }
 
-export interface ReceivedReviewsPage extends Pagination {
-  summary: UserReputationSummary
+export interface ReviewListData {
+  summary: ReviewSummary
   items: Review[]
+  pageNumber: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
+export interface ApiResponse<T> {
+  message: string
+  data: T
+  code: number
 }

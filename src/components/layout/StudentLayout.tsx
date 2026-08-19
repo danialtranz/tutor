@@ -5,26 +5,34 @@ import {
   Search,
   CalendarDays,
   LineChart,
-  AlertCircle,
   LogOut,
   Bell,
-  Wallet,
   Menu,
   X,
   User,
+  UserShield,
 } from 'lucide-react'
-
+import { studentApi } from '@/features/student/api/studentApi'
+import { useQuery } from '@tanstack/react-query'
+import { UserRole } from '@/constants/enums'
+export const UserRoleLabel: Record<number, string> = {
+  [UserRole.Admin]: 'Admin',
+  [UserRole.Tutor]: 'Tutor',
+  [UserRole.Student]: 'Student',
+}
 export default function StudentLayout() {
   const navigate = useNavigate()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   // Giả lập thông tin user đang đăng nhập
-  const user = {
-    fullName: 'Nguyễn Văn Học Viên',
-    email: 'student@example.com',
-    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student123',
-    creditBalance: 250,
-  }
+  const {
+    data: user,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: studentApi.getMe,
+  })
 
   const navItems = [
     {
@@ -127,15 +135,17 @@ export default function StudentLayout() {
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
             <div className="flex items-center gap-2.5 overflow-hidden">
               <img
-                src={user.avatarUrl}
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                  user?.fullName || 'student',
+                )}`}
                 alt="Avatar"
                 className="h-9 w-9 shrink-0 rounded-full border border-white bg-indigo-100 object-cover shadow-xs dark:border-gray-700"
               />
               <div className="truncate">
                 <p className="truncate text-xs font-bold text-gray-900 dark:text-gray-100">
-                  {user.fullName}
+                  {user?.fullName}
                 </p>
-                <p className="truncate text-[11px] text-gray-400">{user.email}</p>
+                <p className="truncate text-[11px] text-gray-400">{user?.email}</p>
               </div>
             </div>
             <button
@@ -170,8 +180,10 @@ export default function StudentLayout() {
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Khối Hiển thị Credit */}
             <div className="flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-              <Wallet className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <span>{user.creditBalance} Credit</span>
+              <UserShield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <span>
+                {user?.role != null ? UserRoleLabel[user.role] : 'Unknown'}
+              </span>{' '}
             </div>
 
             {/* Thông báo */}
