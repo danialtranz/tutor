@@ -7,6 +7,8 @@ export interface AuthUser {
   timeZoneId?: string
 }
 
+export type UserRole = AuthUser['role']
+
 export interface LoginPayload {
   email: string
   password: string
@@ -18,10 +20,6 @@ export interface RegisterStudentPayload {
   email: string
   password: string
   phone: string
-  gradeLevel?: string
-  grade?: string
-  learningNeeds?: string
-  address?: string
 }
 
 export interface RegisterTutorPayload {
@@ -29,10 +27,6 @@ export interface RegisterTutorPayload {
   email: string
   password: string
   phone: string
-  bio: string
-  qualification: string
-  experienceYears: number
-  subjects?: string[]
 }
 
 export interface LoginResponse {
@@ -45,9 +39,15 @@ export interface ForgotPasswordPayload {
   email: string
 }
 
+export interface VerifyEmailResponse {
+  success: boolean
+  message: string
+}
+
 export interface ResetPasswordPayload {
   token: string
   newPassword: string
+  confirmPassword: string
 }
 
 export interface ChangePasswordPayload {

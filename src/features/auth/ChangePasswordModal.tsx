@@ -16,7 +16,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { addToast } = useToast()
+  const toast = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,7 +41,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
 
     try {
       await authApi.changePassword({ currentPassword, newPassword })
-      addToast('Đổi mật khẩu thành công!', 'success')
+      toast.success('Đổi mật khẩu thành công!')
       onClose()
       setCurrentPassword('')
       setNewPassword('')
@@ -49,7 +49,7 @@ export function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProp
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Đổi mật khẩu thất bại'
       setError(msg)
-      addToast(msg, 'error')
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
