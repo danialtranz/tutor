@@ -40,6 +40,16 @@ export function TutorApplicationsPage() {
     void loadApplications()
   }, [statusFilter, searchQuery])
 
+  const handleOpenDetail = async (application: TutorApplication) => {
+    try {
+      const detail = await adminApi.getTutorApplicationDetail(application.id)
+      setSelectedApp(detail)
+      setIsDetailModalOpen(true)
+    } catch {
+      toast.error('Không thể tải chi tiết hồ sơ gia sư')
+    }
+  }
+
   const handleApprove = async (app: TutorApplication) => {
     setIsActionLoading(true)
     try {
@@ -138,10 +148,7 @@ export function TutorApplicationsPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              setSelectedApp(row)
-              setIsDetailModalOpen(true)
-            }}
+            onClick={() => void handleOpenDetail(row)}
           >
             Chi tiết
           </Button>

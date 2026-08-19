@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -15,6 +15,25 @@ export function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    if (!token) {
+      setIsTokenValid(false)
+      setError('Liên kết đặt lại mật khẩu không hợp lệ hoặc thiếu mã token.')
+      return
+    }
+
+    authApi.validateResetToken(token)
+      .then((isValid) => {
+        setIsTokenValid(isValid)
+        if (!isValid) setError('Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.')
+      })
+      .catch((err: unknown) => {
+        setIsTokenValid(false)
+        setError(err instanceof Error ? err.message : 'Không thể kiểm tra liên kết đặt lại mật khẩu.')
+      })
+  }, [token])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,6 +76,9 @@ export function ResetPasswordPage() {
           </p>
         </div>
 
+        {isTokenValid === null ? (
+          <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-300">Đang kiểm tra liên kết đặt lại mật khẩu...</p>
+        ) : isTokenValid ? (
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
@@ -94,6 +116,14 @@ export function ResetPasswordPage() {
             </Link>
           </div>
         </form>
+        ) : (
+          <div className="mt-8 space-y-4 text-center">
+            <p className="text-sm text-rose-600 dark:text-rose-300">{error}</p>
+            <Link to="/forgot-password" className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+              Gửi lại yêu cầu đặt mật khẩu
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

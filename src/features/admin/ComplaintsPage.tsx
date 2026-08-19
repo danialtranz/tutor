@@ -35,10 +35,15 @@ export function ComplaintsPage() {
     void loadComplaints()
   }, [statusFilter])
 
-  const handleOpenDetail = (complaint: Complaint) => {
-    setSelectedComplaint(complaint)
-    setResolutionNotes(complaint.resolutionNotes || '')
-    setDecision('resolved')
+  const handleOpenDetail = async (complaint: Complaint) => {
+    try {
+      const detail = await adminApi.getComplaintDetail(complaint.id)
+      setSelectedComplaint(detail)
+      setResolutionNotes(detail.resolutionNotes || '')
+      setDecision('resolved')
+    } catch {
+      toast.error('Không thể tải chi tiết khiếu nại')
+    }
   }
 
   const handleResolveSubmit = async () => {
@@ -113,7 +118,7 @@ export function ComplaintsPage() {
         <Button
           size="sm"
           variant={row.status === 'resolved' || row.status === 'rejected' ? 'outline' : 'gradient'}
-          onClick={() => handleOpenDetail(row)}
+          onClick={() => void handleOpenDetail(row)}
         >
           {row.status === 'resolved' || row.status === 'rejected' ? 'Xem kết quả' : 'Xử lý khiếu nại'}
         </Button>
