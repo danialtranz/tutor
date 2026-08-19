@@ -15,8 +15,8 @@ export function LoginPage() {
   const location = useLocation()
   const { login, status, error } = useAuthStore()
 
-  const [email, setEmail] = useState('admin@tutor.com')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const redirectTo = (location.state as LocationState)?.from?.pathname ?? '/'
 
@@ -33,11 +33,6 @@ export function LoginPage() {
     } catch {
       /* error surfaced via store */
     }
-  }
-
-  const fillDemo = (roleEmail: string) => {
-    setEmail(roleEmail)
-    setPassword('password')
   }
 
   return (
@@ -57,49 +52,6 @@ export function LoginPage() {
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
             Chào mừng bạn quay trở lại với GiaSưConnect
           </p>
-        </div>
-
-        {/* Quick Demo Role Picker */}
-        <div className="mt-6 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block text-center mb-2">
-            Thao tác nhanh Demo:
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => fillDemo('admin@tutor.com')}
-              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                email.startsWith('admin')
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              👑 Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('tutor@demo.com')}
-              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                email.startsWith('tutor')
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              👨‍🏫 Gia sư
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('student@demo.com')}
-              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                email.startsWith('student')
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              🎓 Học viên
-            </button>
-          </div>
-
         </div>
 
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">

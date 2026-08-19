@@ -9,7 +9,7 @@ export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
   const navigate = useNavigate()
-  const { addToast } = useToast()
+  const toast = useToast()
 
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -33,13 +33,13 @@ export function ResetPasswordPage() {
     setError(null)
 
     try {
-      await authApi.resetPassword({ token, newPassword })
-      addToast('Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.', 'success')
+      await authApi.resetPassword({ token, newPassword, confirmPassword })
+      toast.success('Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.')
       navigate('/login')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Đặt lại mật khẩu thất bại'
       setError(msg)
-      addToast(msg, 'error')
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

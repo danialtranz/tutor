@@ -14,9 +14,6 @@ export function TutorRegisterPage() {
     email: '',
     password: '',
     phone: '',
-    bio: '',
-    qualification: '',
-    experienceYears: 0,
   })
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -26,10 +23,7 @@ export function TutorRegisterPage() {
     form.name.trim() &&
     form.email.trim() &&
     form.password.trim() &&
-    form.phone.trim() &&
-    form.bio.trim() &&
-    form.qualification.trim() &&
-    form.experienceYears > 0
+    form.phone.trim()
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -100,13 +94,6 @@ export function TutorRegisterPage() {
             required
           />
           <Input
-            label="Trình độ & Trường đào tạo"
-            placeholder="vd: Cử nhân Sư phạm Toán - ĐHQG"
-            value={form.qualification}
-            onChange={(e) => setForm({ ...form, qualification: e.target.value })}
-            required
-          />
-          <Input
             label="Mật khẩu"
             type="password"
             placeholder="••••••••"
@@ -122,31 +109,6 @@ export function TutorRegisterPage() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
-
-          <div className="md:col-span-2">
-            <Input
-              label="Số năm kinh nghiệm giảng dạy"
-              type="number"
-              placeholder="vd: 3"
-              value={form.experienceYears || ''}
-              onChange={(e) => setForm({ ...form, experienceYears: Number(e.target.value) })}
-              required
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="mb-2 block text-xs font-bold text-slate-700 dark:text-slate-200">
-              Giới thiệu bản thân & Phương pháp sư phạm
-            </label>
-            <textarea
-              rows={3}
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              placeholder="Tóm tắt kinh nghiệm dạy học, phương pháp truyền đạt và thành tích các học sinh từng giảng dạy..."
-              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-              required
-            />
-          </div>
 
           {error && (
             <div className="md:col-span-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold text-center">

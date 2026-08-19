@@ -16,7 +16,7 @@ export function ComplaintsPage() {
   // Resolve Modal
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null)
   const [resolutionNotes, setResolutionNotes] = useState('')
-  const [decision, setDecision] = useState<'resolved' | 'rejected'>('resolved')
+  const [decision, setDecision] = useState<'in_review' | 'resolved' | 'rejected'>('resolved')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const loadComplaints = async () => {
@@ -78,11 +78,11 @@ export function ComplaintsPage() {
       ),
     },
     {
-      key: 'title',
-      header: 'Tiêu đề khiếu nại',
+      key: 'type',
+      header: 'Loại khiếu nại',
       render: (row) => (
         <div>
-          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{row.title}</p>
+          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{row.type}</p>
           <p className="text-xs text-slate-500 truncate max-w-xs">{row.content}</p>
         </div>
       ),
@@ -92,8 +92,8 @@ export function ComplaintsPage() {
       header: 'Trạng thái',
       render: (row) => {
         const map = {
-          pending: { label: 'Mới gửi', cls: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200' },
-          in_progress: { label: 'Đang xử lý', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200' },
+          open: { label: 'Mới gửi', cls: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200' },
+          in_review: { label: 'Đang xử lý', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200' },
           resolved: { label: 'Đã giải quyết', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200' },
           rejected: { label: 'Từ chối', cls: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-300' },
         }
@@ -137,8 +137,8 @@ export function ComplaintsPage() {
           onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'all')}
           options={[
             { label: 'Tất cả khiếu nại', value: 'all' },
-            { label: '🔴 Mới gửi', value: 'pending' },
-            { label: '🟡 Đang xử lý', value: 'in_progress' },
+            { label: '🔴 Mới gửi', value: 'open' },
+            { label: '🟡 Đang xử lý', value: 'in_review' },
             { label: '🟢 Đã giải quyết', value: 'resolved' },
             { label: '⚪ Từ chối giải quyết', value: 'rejected' },
           ]}
@@ -185,7 +185,7 @@ export function ComplaintsPage() {
                 <span className="font-mono font-bold text-brand-600">Mã: {selectedComplaint.id}</span>
                 <span className="text-slate-400 font-medium">Ngày tạo: {selectedComplaint.createdAt}</span>
               </div>
-              <p className="font-extrabold text-base text-slate-900 dark:text-slate-100">{selectedComplaint.title}</p>
+              <p className="font-extrabold text-base text-slate-900 dark:text-slate-100">{selectedComplaint.type}</p>
               <div className="flex items-center gap-6 text-xs font-semibold pt-1">
                 <span>👤 Bên khiếu nại: <strong className="text-brand-600">{selectedComplaint.complainantName}</strong></span>
                 <span>⚠️ Bị khiếu nại: <strong className="text-rose-600">{selectedComplaint.targetName}</strong></span>
@@ -220,8 +220,9 @@ export function ComplaintsPage() {
                 <Select
                   label="Quyết định xử lý"
                   value={decision}
-                  onChange={(e) => setDecision(e.target.value as 'resolved' | 'rejected')}
+                  onChange={(e) => setDecision(e.target.value as 'in_review' | 'resolved' | 'rejected')}
                   options={[
+                    { label: '🟡 Đang xem xét', value: 'in_review' },
                     { label: '🟢 Chấp nhận khiếu nại & Hòa giải thành công', value: 'resolved' },
                     { label: '🔴 Từ chối khiếu nại (Không đủ căn cứ / Bác bỏ)', value: 'rejected' },
                   ]}
