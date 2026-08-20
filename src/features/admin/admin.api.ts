@@ -12,14 +12,14 @@ const tutorStatusToApi: Record<TutorApplicationStatus, string> = {
   suspended: 'Suspended',
 }
 
-const complaintStatusToApi: Record<ComplaintStatus, number> = {
-  open: 1,
-  in_review: 2,
-  resolved: 3,
-  rejected: 4,
+const complaintStatusToApi: Record<ComplaintStatus, string> = {
+  open: 'Open',
+  in_review: 'InReview',
+  resolved: 'Resolved',
+  rejected: 'Rejected',
 }
 
-// Map theo enum thật từ BE: UserRole (Admin=1, Tutor=2, Student=3), UserStatus (Active=1, Locked=2, Inactive=3)
+
 const roleMap: Record<string, AdminUser['role']> = { '1': 'admin', '2': 'tutor', '3': 'student' }
 const statusMap: Record<string, AdminUser['status']> = { '1': 'active', '2': 'locked', '3': 'inactive' }
 

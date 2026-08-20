@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, useEffect } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from './auth.store'
@@ -15,7 +15,7 @@ export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, status, error } = useAuthStore()
+  const { login, status, error, clearError } = useAuthStore()
   const toast = useToast()
 
   const [email, setEmail] = useState('')
@@ -23,6 +23,11 @@ export function LoginPage() {
   const [isResendingVerification, setIsResendingVerification] = useState(false)
 
   const redirectTo = (location.state as LocationState)?.from?.pathname ?? '/'
+
+  useEffect(() => {
+    clearError()
+  }, [clearError])
+
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -130,7 +135,7 @@ export function LoginPage() {
 
           {error && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-xs font-semibold text-rose-600">
-              {t('auth.invalidCredentials')}
+              {error}
             </div>
           )}
 
