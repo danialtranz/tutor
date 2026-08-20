@@ -9,16 +9,14 @@ import { authApi } from '@/features/auth/auth.api'
 
 /** Shape our backend uses for error payloads. Adapt to your API. */
 export interface ApiErrorBody {
-  message?: string
-  detail?: string   // phòng khi có endpoint trả ProblemDetails
-  title?: string
-  code?: number | string
+  message: string
+  code?: string
   errors?: Record<string, string[]>
 }
 
 export interface ApiEnvelope<T> {
   message: string
-  data: T | null
+  data: T
   code: number
 }
 
@@ -32,15 +30,10 @@ export class ApiError extends Error {
   readonly fieldErrors?: Record<string, string[]>
 
   constructor(status: number, body?: ApiErrorBody) {
-    super(
-      body?.message ??
-        body?.detail ??
-        body?.title ??
-        `Request failed with status ${status}`,
-    )
+    super(body?.message ?? `Request failed with status ${status}`)
     this.name = 'ApiError'
     this.status = status
-    this.code = body?.code !== undefined ? String(body.code) : undefined
+    this.code = body?.code
     this.fieldErrors = body?.errors
   }
 }

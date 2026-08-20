@@ -4,12 +4,11 @@ export interface AuthUser {
   id: number
   name: string
   email: string
-  role: 'student' | 'tutor' | 'admin'
+  role: UserRole
   status: 'active' | 'locked' | 'inactive'
   timeZoneId?: string
 }
 
-export type UserRole = AuthUser['role']
 
 export interface LoginPayload {
   email: string

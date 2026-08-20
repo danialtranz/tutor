@@ -20,6 +20,7 @@ interface AuthState {
   initialize: () => Promise<void>
   registerStudent: (payload: RegisterStudentPayload) => Promise<void>
   registerTutor: (payload: RegisterTutorPayload) => Promise<void>
+  clearError: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -102,6 +103,9 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           set({ user: null, isAuthenticated: false, status: 'idle', error: null })
         }
+      },
+      clearError() {
+        set({ error: null, status: 'idle' })
       },
     }),
     {
