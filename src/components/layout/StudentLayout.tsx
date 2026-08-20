@@ -25,7 +25,7 @@ export const UserRoleLabel: Record<number, string> = {
 export default function StudentLayout() {
   const navigate = useNavigate()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const {
     data: user,
     isLoading,
@@ -64,9 +64,22 @@ export default function StudentLayout() {
   ]
 
   const handleLogout = () => {
-    navigate('/')
+    setIsLogoutModalOpen(true)
   }
 
+  const confirmLogout = async () => {
+    setIsLogoutModalOpen(false)
+
+    // 1. Chuyển hướng ngay lập tức để tạo cảm giác mượt mà
+    navigate('/', { replace: true })
+
+    // 2. Thực hiện gọi API / xóa session ở background
+    try {
+      await authApi.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-800 transition-colors duration-200 dark:bg-gray-950 dark:text-gray-200">
       {/* Overlay cho Mobile Sidebar */}
@@ -220,6 +233,46 @@ export default function StudentLayout() {
         <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
+        {isLogoutModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                  <LogOut className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                    Đăng xuất
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Bạn có chắc muốn đăng xuất không?
+                  </p>
+                </div>
+              </div>
+
+              <p className="mb-6 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                Bạn sẽ được chuyển về trang đăng nhập sau khi đăng xuất.
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setIsLogoutModalOpen(false)}
+                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  onClick={confirmLogout}
+                  className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
