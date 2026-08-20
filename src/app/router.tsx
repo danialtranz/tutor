@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { RoleBasedRoute } from '@/features/auth/RoleBasedRoute'
+import { PublicOnlyRoute } from '@/features/auth/PublicOnlyRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage'
 
@@ -46,21 +47,30 @@ const ComplaintsPage = lazy(() =>
 const UsersManagementPage = lazy(() =>
   import('@/features/admin/UsersManagementPage').then((m) => ({ default: m.UsersManagementPage })),
 )
+const AlreadyAuthenticatedPage = lazy(() =>
+  import('@/features/auth/AlreadyAuthenticatedPage').then((m) => ({ default: m.AlreadyAuthenticatedPage })),
+)
 
 export const router = createBrowserRouter([
   // Public Auth Routes
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register/student', element: <StudentRegisterPage /> },
-  { path: '/register/tutor', element: <TutorRegisterPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password', element: <ResetPasswordPage /> },
+    {
+    element: <PublicOnlyRoute />,
+    children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register/student', element: <StudentRegisterPage /> },
+      { path: '/register/tutor', element: <TutorRegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+    ],
+  },
+
   { path: '/verify-email', element: <VerifyEmailPage /> },
-  { path: '/unauthorized', element: <UnauthorizedPage /> },
 
   { path: '/', element: <HomePage /> },
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/already-authenticated', element: <AlreadyAuthenticatedPage /> },
       {
         element: <AppLayout />,
         children: [
