@@ -14,7 +14,6 @@ export type UserRole = AuthUser['role']
 export interface LoginPayload {
   email: string
   password: string
-  // Đã xoá field `role`: LoginRequest của BE không nhận field này, gửi lên cũng bị BE bỏ qua.
 }
 
 export interface RegisterStudentPayload {
@@ -60,5 +59,5 @@ export interface ResendVerificationEmailPayload {
 
 export interface VerifyEmailResponse {
   success: boolean
-  message?: string
+  message: string | null
 }

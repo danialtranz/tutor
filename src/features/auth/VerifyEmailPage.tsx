@@ -6,7 +6,7 @@ import { authApi } from './auth.api'
 type VerificationState = 'loading' | 'success' | 'error'
 
 function responseMessage(response: Awaited<ReturnType<typeof authApi.verifyEmail>>): string {
-  return typeof response === 'string' ? response : response.message
+  return typeof response === 'string' ? response : (response.message ?? '')
 }
 
 export function VerifyEmailPage() {
@@ -23,7 +23,7 @@ export function VerifyEmailPage() {
     authApi.verifyEmail(token)
       .then((response) => {
         if (typeof response !== 'string' && !response.success) {
-          throw new Error(response.message)
+          throw new Error(response.message ?? 'Không thể xác minh email.')
         }
         setState('success')
         setMessage(responseMessage(response) || 'Email của bạn đã được xác minh thành công.')
@@ -38,25 +38,50 @@ export function VerifyEmailPage() {
   const isSuccess = state === 'success'
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 dark:bg-slate-950">
-      <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:p-10">
-        <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl ${isLoading ? 'bg-brand-100 dark:bg-brand-950/50' : isSuccess ? 'bg-emerald-100 dark:bg-emerald-950/50' : 'bg-rose-100 dark:bg-rose-950/50'}`}>
-          {isLoading ? '⏳' : isSuccess ? '✓' : '!'}
-        </div>
+  <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 py-12 dark:bg-slate-950">
+    {/* Background Orbs */}
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl"
+    />
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl"
+    />
 
-        <h1 className="mt-6 text-2xl font-extrabold text-slate-900 dark:text-white">
-          {isLoading ? 'Đang xác minh email' : isSuccess ? 'Xác minh thành công' : 'Không thể xác minh email'}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">{message}</p>
+    <section className="relative w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/90 p-8 text-center shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 sm:p-10">
+      <div
+        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl ${
+          isLoading
+            ? 'bg-brand-100 dark:bg-brand-950/50'
+            : isSuccess
+              ? 'bg-emerald-100 dark:bg-emerald-950/50'
+              : 'bg-rose-100 dark:bg-rose-950/50'
+        }`}
+      >
+        {isLoading ? '⏳' : isSuccess ? '✓' : '!'}
+      </div>
 
-        {!isLoading && (
-          <Link to="/login" className="mt-8 inline-block">
-            <Button variant={isSuccess ? 'gradient' : 'outline'}>
-              Đi tới đăng nhập
-            </Button>
-          </Link>
-        )}
-      </section>
-    </main>
-  )
+      <h1 className="mt-6 text-2xl font-extrabold text-slate-900 dark:text-white">
+        {isLoading
+          ? 'Đang xác minh email'
+          : isSuccess
+            ? 'Xác minh thành công'
+            : 'Không thể xác minh email'}
+      </h1>
+
+      <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+        {message}
+      </p>
+
+      {!isLoading && (
+        <Link to="/login" className="mt-8 inline-block">
+          <Button variant={isSuccess ? 'gradient' : 'outline'}>
+            Đi tới đăng nhập
+          </Button>
+        </Link>
+      )}
+    </section>
+  </main>
+)
 }
