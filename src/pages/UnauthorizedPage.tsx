@@ -19,8 +19,8 @@ export function UnauthorizedPage() {
         </Button>
         <Button
           variant="danger"
-          onClick={() => {
-            logout()
+          onClick={async () => {
+            await logout()
             navigate('/login')
           }}
         >

@@ -16,7 +16,7 @@ interface AuthState {
   isAuthenticated: boolean
   initialized: boolean
   login: (payload: LoginPayload) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   initialize: () => Promise<void>
   registerStudent: (payload: RegisterStudentPayload) => Promise<void>
   registerTutor: (payload: RegisterTutorPayload) => Promise<void>
@@ -34,8 +34,9 @@ export const useAuthStore = create<AuthState>()(
       async login(payload) {
         set({ status: 'loading', error: null })
         try {
+          // authApi.login() đã tự lưu token vào tokenStorage bên trong nó
+          // (bao gồm cả bước gọi /users/me để lấy id thật) — không cần gọi tokenStorage.set() lại ở đây.
           const res = await authApi.login(payload)
-          tokenStorage.set(res.accessToken, res.refreshToken)
           set({ user: res.user, isAuthenticated: true, status: 'idle' })
         } catch (e) {
           const message = e instanceof Error ? e.message : 'error'
@@ -93,18 +94,21 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout() {
-        tokenStorage.clear()
-        set({ user: null, isAuthenticated: false, status: 'idle', error: null })
+      async logout() {
+        // Gọi API để revoke refreshToken ở BE, tránh token cũ vẫn dùng được sau khi logout.
+        // Vẫn clear local state dù API lỗi (authApi.logout() đã tự clear tokenStorage trong finally).
+        try {
+          await authApi.logout()
+        } finally {
+          set({ user: null, isAuthenticated: false, status: 'idle', error: null })
+        }
       },
     }),
     {
       name: 'auth',
-      // Only persist identity; tokens live in tokenStorage.
       partialize: (s) => ({ user: s.user, isAuthenticated: s.isAuthenticated }),
     },
   ),
 )
 
-// Keep the store in sync when the HTTP layer forces a logout (refresh failed).
 window.addEventListener('auth:logout', () => useAuthStore.getState().logout())

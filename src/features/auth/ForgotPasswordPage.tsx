@@ -10,7 +10,7 @@ export function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { addToast } = useToast()
+  const toast = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,11 +25,11 @@ export function ForgotPasswordPage() {
     try {
       await authApi.forgotPassword({ email })
       setSubmitted(true)
-      addToast('Yêu cầu đặt lại mật khẩu đã được gửi đến email của bạn', 'success')
+      toast.success('Yêu cầu đặt lại mật khẩu đã được gửi đến email của bạn')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại'
       setError(msg)
-      addToast(msg, 'error')
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

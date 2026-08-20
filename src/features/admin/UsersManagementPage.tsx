@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/ToastContext'
 
+type UserAction = 'lock' | 'deactivate' | 'activate'
+
 export function UsersManagementPage() {
   const toast = useToast()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
-  const [selectedAction, setSelectedAction] = useState<'lock' | 'unlock' | null>(null)
+  const [selectedAction, setSelectedAction] = useState<UserAction | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const loadUsers = async () => {
@@ -32,21 +34,27 @@ export function UsersManagementPage() {
     void loadUsers()
   }, [search])
 
-  const handleAction = async (user: AdminUser, action: 'lock' | 'unlock') => {
+  const handleAction = (user: AdminUser, action: UserAction) => {
     setSelectedUser(user)
     setSelectedAction(action)
   }
 
   const confirmAction = async () => {
+  console.log('🔥 confirmAction chạy')
+  console.log('selectedUser:', selectedUser)
+  console.log('selectedAction:', selectedAction)
     if (!selectedUser || !selectedAction) return
     setIsSubmitting(true)
     try {
       if (selectedAction === 'lock') {
         await adminApi.lockUser(selectedUser.id, 'Khóa bởi admin')
         toast.info(`Đã khóa tài khoản ${selectedUser.name}`)
+      } else if (selectedAction === 'deactivate') {
+        await adminApi.deactivateUser(selectedUser.id, 'Vô hiệu hóa bởi admin')
+        toast.info(`Đã vô hiệu hóa tài khoản ${selectedUser.name}`)
       } else {
-        await adminApi.unlockUser(selectedUser.id)
-        toast.success(`Đã mở khóa tài khoản ${selectedUser.name}`)
+        await adminApi.activateUser(selectedUser.id)
+        toast.success(`Đã kích hoạt lại tài khoản ${selectedUser.name}`)
       }
       setSelectedAction(null)
       setSelectedUser(null)
@@ -56,6 +64,33 @@ export function UsersManagementPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const statusConfig = {
+    active: { className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200', label: '🟢 Hoạt động' },
+    locked: { className: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200', label: '🔴 Bị khóa' },
+    inactive: { className: 'bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-400 border border-slate-300', label: '⚫ Vô hiệu hóa' },
+  } as const
+
+  const actionCopy: Record<UserAction, { title: string; message: (name: string) => string; confirmText: string; variant: 'danger' | 'primary' }> = {
+    lock: {
+      title: 'Xác nhận khóa tài khoản',
+      message: (name) => `Bạn có chắc chắn muốn khóa tài khoản ${name}? Tài khoản có thể được mở khóa lại sau.`,
+      confirmText: 'Khóa Tài Khoản',
+      variant: 'danger',
+    },
+    deactivate: {
+      title: 'Xác nhận vô hiệu hóa tài khoản',
+      message: (name) => `Bạn có chắc chắn muốn vô hiệu hóa tài khoản ${name}? Dữ liệu tài khoản vẫn được giữ lại, nhưng người dùng sẽ không thể đăng nhập cho đến khi được kích hoạt lại.`,
+      confirmText: 'Vô Hiệu Hóa',
+      variant: 'danger',
+    },
+    activate: {
+      title: 'Xác nhận kích hoạt tài khoản',
+      message: (name) => `Bạn có chắc chắn muốn kích hoạt lại tài khoản ${name}?`,
+      confirmText: 'Kích Hoạt',
+      variant: 'primary',
+    },
   }
 
   const columns: Column<AdminUser>[] = [
@@ -94,29 +129,38 @@ export function UsersManagementPage() {
       key: 'status',
       header: 'Trạng thái',
       render: (row) => (
-        <span className={`rounded-full px-3 py-1 text-xs font-bold ${
-          row.status === 'active'
-            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200'
-            : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200'
-        }`}>
-          {row.status === 'active' ? '🟢 Hoạt động' : '🔴 Bị khóa'}
+        <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusConfig[row.status].className}`}>
+          {statusConfig[row.status].label}
         </span>
       ),
     },
     {
       key: 'actions',
       header: 'Thao tác',
-      render: (row) => (
-        <Button
-          size="sm"
-          variant={row.status === 'active' ? 'danger' : 'outline'}
-          onClick={() => handleAction(row, row.status === 'active' ? 'lock' : 'unlock')}
-        >
-          {row.status === 'active' ? '🔒 Khóa' : '🔓 Mở khóa'}
-        </Button>
-      ),
+      render: (row) => {
+        if (row.status === 'active') {
+          return (
+            <div className="flex gap-2">
+              <Button size="sm" variant="danger" onClick={() => handleAction(row, 'lock')}>
+                🔒 Khóa
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleAction(row, 'deactivate')}>
+                ⚫ Vô hiệu hóa
+              </Button>
+            </div>
+          )
+        }
+        // Locked hoặc Inactive đều quay lại Active qua cùng 1 hành động
+        return (
+          <Button size="sm" variant="outline" onClick={() => handleAction(row, 'activate')}>
+            🔓 Kích hoạt lại
+          </Button>
+        )
+      },
     },
   ]
+
+  const activeCopy = selectedAction ? actionCopy[selectedAction] : null
 
   return (
     <div className="space-y-6">
@@ -135,16 +179,18 @@ export function UsersManagementPage() {
 
       <Table columns={columns} data={users} keyExtractor={(row) => row.id} isLoading={isLoading} emptyMessage="Không có người dùng nào" />
 
-      <ConfirmDialog
-        isOpen={!!selectedUser && !!selectedAction}
-        title={selectedAction === 'lock' ? 'Xác nhận khóa tài khoản' : 'Xác nhận mở khóa tài khoản'}
-        message={`Bạn có chắc chắn muốn ${selectedAction === 'lock' ? 'khóa' : 'mở khóa'} tài khoản ${selectedUser?.name}?`}
-        confirmText={selectedAction === 'lock' ? 'Khóa Tài Khoản' : 'Mở Khóa Tài Khoản'}
-        variant={selectedAction === 'lock' ? 'danger' : 'primary'}
-        isLoading={isSubmitting}
-        onClose={() => setSelectedAction(null)}
-        onConfirm={confirmAction}
-      />
+      {selectedUser && activeCopy && (
+        <ConfirmDialog
+          isOpen={!!selectedUser && !!selectedAction}
+          title={activeCopy.title}
+          message={activeCopy.message(selectedUser.name)}
+          confirmText={activeCopy.confirmText}
+          variant={activeCopy.variant}
+          isLoading={isSubmitting}
+          onClose={() => setSelectedAction(null)}
+          onConfirm={confirmAction}
+        />
+      )}
     </div>
   )
 }

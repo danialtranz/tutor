@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, NavLink, useLocation } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { Globe, Bell, LogOut, Menu, GraduationCap, Lock } from 'lucide-react'
+import { Menu, GraduationCap, Lock } from 'lucide-react'
 import { useAuthStore } from '@/features/auth/auth.store'
-import { supportedLocales } from '@/lib/i18n'
 import { Button } from '@/components/ui/Button'
 import { ChangePasswordModal } from '@/features/auth/ChangePasswordModal'
 
@@ -12,7 +10,6 @@ export interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuthStore()
@@ -78,41 +75,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           </NavLink>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="relative">
-            <Globe className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
-            <select
-              aria-label="Language"
-              value={i18n.resolvedLanguage}
-              onChange={(e) => void i18n.changeLanguage(e.target.value)}
-              className={
-                isTutorDark
-                  ? 'h-9 rounded-xl border border-white/[0.08] bg-white/[0.03] pl-8 pr-2.5 text-xs font-semibold text-slate-300 outline-none focus:border-brand-500/40'
-                  : 'h-9 rounded-xl border border-slate-200 bg-slate-50 px-2.5 pl-8 text-xs font-semibold text-slate-700 transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
-              }
-            >
-              {supportedLocales.map((l) => (
-                <option key={l} value={l}>
-                  {l.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {user && (
-            <button
-              type="button"
-              className={
-                isTutorDark
-                  ? 'relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] text-slate-400 transition hover:text-white'
-                  : 'relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500 transition hover:text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:hover:text-slate-200'
-              }
-              aria-label="Thông báo"
-            >
-              <Bell className="h-4 w-4" />
-            </button>
-          )}
-
+        <div className="flex items-center gap-3">
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3">
               <div
@@ -149,15 +112,13 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  logout()
+                onClick={async () => {
+                  await logout()
                   navigate('/')
                 }}
                 className={isTutorDark ? 'border-white/[0.08] bg-transparent text-slate-300 hover:bg-white/5' : undefined}
               >
-                <LogOut className="mr-1.5 h-3.5 w-3.5 sm:hidden" />
-                <span className="hidden sm:inline">{t('nav.logout')}</span>
-                <span className="sm:hidden">Thoát</span>
+                Đăng xuất
               </Button>
             </div>
           ) : (

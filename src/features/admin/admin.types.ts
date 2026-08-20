@@ -1,16 +1,18 @@
-export type TutorApplicationStatus = 'pending' | 'approved' | 'rejected'
+export type TutorApplicationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'suspended'
 export type SubjectStatus = 'active' | 'inactive'
-export type ComplaintStatus = 'pending' | 'in_progress' | 'resolved' | 'rejected'
+export type ComplaintStatus = 'open' | 'in_review' | 'resolved' | 'rejected'
 
 export interface DashboardStats {
-  totalTutors: number
-  totalStudents: number
-  pendingTutorApplications: number
-  openComplaints: number
-  totalClassesBooked: number
-  monthlyRevenue: number
-  monthlyGrowthPercent: number
-  chartData: { month: string; applications: number; bookings: number }[]
+  period: { fromUtc: string; toUtc: string }
+  periodMetrics: {
+    bookingStatistics: { total: number; pending: number; confirmed: number; completed: number; cancelled: number; rejected: number }
+    popularSubjects: { subjectId: number; subjectName: string; bookingCount: number }[]
+  }
+  currentSnapshot: {
+    goalCompletionRate: { completedGoals: number; eligibleGoals: number; ratePercent: number }
+    pendingTutorApprovals: number
+    openComplaints: number
+  }
 }
 
 export interface TutorApplication {
@@ -33,10 +35,8 @@ export interface Subject {
   id: string
   code: string
   name: string
-  category: string
   description: string
   status: SubjectStatus
-  tutorCount: number
 }
 
 export interface Complaint {
@@ -44,12 +44,13 @@ export interface Complaint {
   complainantName: string
   complainantRole: 'student' | 'tutor'
   targetName: string
-  title: string
+  type: string
   content: string
   status: ComplaintStatus
   createdAt: string
   resolutionNotes?: string
-  resolvedAt?: string
+  resolvedAt?: string | null
+  evidenceUrl?: string
 }
 
 export interface AdminUser {
@@ -57,5 +58,6 @@ export interface AdminUser {
   name: string
   email: string
   role: 'student' | 'tutor' | 'admin'
-  status: 'active' | 'locked'
+  status: 'active' | 'locked' | 'inactive'
+  timeZoneId?: string
 }

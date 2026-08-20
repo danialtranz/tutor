@@ -14,8 +14,6 @@ export function StudentRegisterPage() {
     email: '',
     password: '',
     phone: '',
-    gradeLevel: '',
-    learningNeeds: '',
   })
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -25,11 +23,9 @@ export function StudentRegisterPage() {
     form.name.trim() &&
     form.email.trim() &&
     form.password.trim() &&
-    form.phone.trim() &&
-    form.gradeLevel.trim() &&
-    form.learningNeeds.trim()
+    form.phone.trim()
 
-  async function onSubmit(event: FormEvent) {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError(null)
 
@@ -74,7 +70,7 @@ export function StudentRegisterPage() {
           </p>
         </div>
 
-        <form onSubmit={onSubmit} className="grid gap-5 md:grid-cols-2">
+        <form onSubmit={handleSubmit} className="grid gap-5 md:grid-cols-2">
           <Input
             label="Họ và tên học viên"
             placeholder="vd: Nguyễn Văn Học"
@@ -98,13 +94,6 @@ export function StudentRegisterPage() {
             required
           />
           <Input
-            label="Lớp / Trình độ học tập"
-            placeholder="vd: Lớp 10 / Luyện thi ĐH"
-            value={form.gradeLevel}
-            onChange={(e) => setForm({ ...form, gradeLevel: e.target.value })}
-            required
-          />
-          <Input
             label="Mật khẩu"
             type="password"
             placeholder="••••••••"
@@ -120,20 +109,6 @@ export function StudentRegisterPage() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
-
-          <div className="md:col-span-2">
-            <label className="mb-2 block text-xs font-bold text-slate-700 dark:text-slate-200">
-              Nhu cầu học tập & Mục tiêu
-            </label>
-            <textarea
-              rows={3}
-              value={form.learningNeeds}
-              onChange={(e) => setForm({ ...form, learningNeeds: e.target.value })}
-              placeholder="Mô tả các môn học cần tìm gia sư, mục tiêu điểm số hoặc hình thức học (online/tại nhà)..."
-              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-              required
-            />
-          </div>
 
           {error && (
             <div className="md:col-span-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold text-center">

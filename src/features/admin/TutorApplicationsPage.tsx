@@ -40,6 +40,16 @@ export function TutorApplicationsPage() {
     void loadApplications()
   }, [statusFilter, searchQuery])
 
+  const handleOpenDetail = async (application: TutorApplication) => {
+    try {
+      const detail = await adminApi.getTutorApplicationDetail(application.id)
+      setSelectedApp(detail)
+      setIsDetailModalOpen(true)
+    } catch {
+      toast.error('Không thể tải chi tiết hồ sơ gia sư')
+    }
+  }
+
   const handleApprove = async (app: TutorApplication) => {
     setIsActionLoading(true)
     try {
@@ -118,6 +128,8 @@ export function TutorApplicationsPage() {
           pending: { label: 'Chờ duyệt', cls: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/60' },
           approved: { label: 'Đã duyệt', cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60' },
           rejected: { label: 'Từ chối', cls: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/60' },
+          draft: { label: 'Bản nháp', cls: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/60' },
+          suspended: { label: 'Tạm ngưng', cls: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/60' },
         }
         const s = statusMap[row.status]
         return <span className={`px-3 py-1 rounded-full text-xs font-bold ${s.cls}`}>{s.label}</span>
@@ -136,10 +148,7 @@ export function TutorApplicationsPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              setSelectedApp(row)
-              setIsDetailModalOpen(true)
-            }}
+            onClick={() => void handleOpenDetail(row)}
           >
             Chi tiết
           </Button>

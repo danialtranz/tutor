@@ -14,6 +14,12 @@ export interface ApiErrorBody {
   errors?: Record<string, string[]>
 }
 
+export interface ApiEnvelope<T> {
+  message: string
+  data: T
+  code: number
+}
+
 /**
  * Normalized error thrown to the UI/query layer. Components should never see
  * a raw AxiosError — they get this stable shape instead.
@@ -61,13 +67,9 @@ async function refreshSession(): Promise<void> {
 // so callers can do `res.data.accessToken` instead of `res.data.data.accessToken`.
 http.interceptors.response.use(
   (response) => {
-    if (
-      response.data !== null &&
-      typeof response.data === 'object' &&
-      'data' in response.data &&
-      'code' in response.data
-    ) {
-      response.data = response.data.data
+    const body = response.data as Partial<ApiEnvelope<unknown>>
+    if (body && typeof body === 'object' && 'data' in body && 'code' in body) {
+      response.data = body.data
     }
     return response
   },

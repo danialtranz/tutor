@@ -1,11 +1,7 @@
 import { http } from '@/lib/api/http'
 import type { CreateUserInput, UpdateUserInput, User } from './users.types'
 
-/**
- * Users API. Talks to the configured VITE_API_BASE_URL. Defaults point at
- * jsonplaceholder.typicode.com, which fakes writes (returns a plausible
- * response without persisting) — perfect for a runnable starter.
- */
+/** @deprecated The generic /users endpoint is not part of TutorConnect v2. */
 export const usersApi = {
   list: () => http.get<User[]>('/users').then((r) => r.data),
   get: (id: number) => http.get<User>(`/users/${id}`).then((r) => r.data),

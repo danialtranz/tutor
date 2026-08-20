@@ -4,15 +4,17 @@ export interface AuthUser {
   id: number
   name: string
   email: string
-  role: UserRole
-  status: 'active' | 'locked'
+  role: 'student' | 'tutor' | 'admin'
+  status: 'active' | 'locked' | 'inactive'
   timeZoneId?: string
 }
+
+export type UserRole = AuthUser['role']
 
 export interface LoginPayload {
   email: string
   password: string
-  role?: string
+  // Đã xoá field `role`: LoginRequest của BE không nhận field này, gửi lên cũng bị BE bỏ qua.
 }
 
 export interface RegisterStudentPayload {
@@ -20,10 +22,6 @@ export interface RegisterStudentPayload {
   email: string
   password: string
   phone: string
-  gradeLevel?: string
-  grade?: string
-  learningNeeds?: string
-  address?: string
 }
 
 export interface RegisterTutorPayload {
@@ -31,15 +29,13 @@ export interface RegisterTutorPayload {
   email: string
   password: string
   phone: string
-  bio: string
-  qualification: string
-  experienceYears: number
-  subjects?: string[]
+
 }
 
 export interface LoginResponse {
   accessToken: string
   refreshToken?: string
+  expiresIn?: string 
   user: AuthUser
 }
 
@@ -50,9 +46,19 @@ export interface ForgotPasswordPayload {
 export interface ResetPasswordPayload {
   token: string
   newPassword: string
+  confirmPassword: string
 }
 
 export interface ChangePasswordPayload {
   currentPassword: string
   newPassword: string
+}
+
+export interface ResendVerificationEmailPayload {
+  email: string
+}
+
+export interface VerifyEmailResponse {
+  success: boolean
+  message?: string
 }
