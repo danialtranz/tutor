@@ -1,254 +1,173 @@
 import type {
   AuthUser,
-  ChangePasswordPayload,
   ForgotPasswordPayload,
   LoginPayload,
   LoginResponse,
   RegisterStudentPayload,
   RegisterTutorPayload,
+  ResendVerificationEmailPayload,
   ResetPasswordPayload,
+  VerifyEmailResponse,
 } from './auth.types'
 import { http } from '@/lib/api/http'
 import { tokenStorage } from '@/lib/api/token-storage'
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+type ApiRole = number | 'Student' | 'Tutor' | 'Admin'
+type ApiStatus = number
 
-function createMockUser(email: string): AuthUser {
-  const normalized = email.trim().toLowerCase()
-  const role = normalized.includes('admin')
-    ? 'admin'
-    : normalized.includes('tutor')
-    ? 'tutor'
-    : 'student'
+const roleMap: Record<string, AuthUser['role']> = {
+  '1': 'admin', Admin: 'admin',
+  '2': 'tutor', Tutor: 'tutor',
+  '3': 'student', Student: 'student',
+}
 
+const statusMap: Record<string, AuthUser['status']> = {
+  '1': 'active', Active: 'active',
+  '2': 'locked', Locked: 'locked',
+  '3': 'inactive', Inactive: 'inactive',
+}
+
+function toUser(data: {
+  id?: number
+  userId?: number
+  email: string
+  fullName: string
+  role: ApiRole
+  status?: ApiStatus
+  timeZoneId?: string
+}): AuthUser {
   return {
-    id: Math.max(1, normalized.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % 1000),
-    name: normalized.includes('admin')
-      ? 'Quản trị hệ thống'
-      : normalized.includes('tutor')
-      ? 'Gia sư mô phỏng'
-      : 'Học viên mô phỏng',
-    email,
-    role,
-    status: 'active',
-    timeZoneId: 'Asia/Ho_Chi_Minh',
+    id: data.id ?? data.userId ?? 0,
+    name: data.fullName,
+    email: data.email,
+    role: roleMap[String(data.role)] ?? 'student',
+    status: statusMap[String(data.status)] ?? 'active',
+    timeZoneId: data.timeZoneId,
   }
 }
 
 export const authApi = {
   async login(payload: LoginPayload): Promise<LoginResponse> {
-    try {
-      const res = await http.post<LoginResponse>('/api/v1/auth/login', payload)
-      if (res.data?.accessToken) {
-        tokenStorage.set(res.data.accessToken, res.data.refreshToken)
-        return res.data
-      }
-    } catch {
-      // Fallback to demo/mock login if backend is offline
-    }
+    const { data } = await http.post<{
+      accessToken: string
+      refreshToken: string
+      expiresIn: string
+      email: string
+      fullName: string
+      role: ApiRole
+    }>('/api/v1/auth/login', {
+      email: payload.email,
+      password: payload.password,
+    })
 
-    await delay(400)
-    if (payload.password !== 'password' && payload.password.length < 3) {
-      const error = new Error('invalidCredentials')
-      error.name = 'InvalidCredentials'
-      throw error
-    }
+    tokenStorage.set(data.accessToken, data.refreshToken)
 
-    const user = createMockUser(payload.email)
-    if (payload.role && (payload.role === 'admin' || payload.role === 'tutor' || payload.role === 'student')) {
-      user.role = payload.role
-    }
-
-    const accessToken = `mock-access-token-${user.role}`
-    const refreshToken = `mock-refresh-token-${user.role}`
-
-    tokenStorage.set(accessToken, refreshToken)
+    // FIX: LoginResponse của BE không có id/userId.
+    // Gọi thêm /users/me để lấy id thật, tránh AuthUser.id luôn = 0.
+    const user = await authApi.me()
 
     return {
-      accessToken,
-      refreshToken,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      expiresIn: data.expiresIn,
       user,
     }
   },
 
   async registerStudent(payload: RegisterStudentPayload): Promise<{ user: AuthUser }> {
-    try {
-      const res = await http.post<{ user: AuthUser }>('/api/v1/auth/register/student', payload)
-      if (res.data?.user) return res.data
-    } catch {
-      // Fallback
-    }
-
-    await delay(500)
-    if (payload.email.includes('taken')) {
-      const error = new Error('Email này đã được sử dụng')
-      throw error
-    }
-
-    const user: AuthUser = {
-      id: Math.floor(Math.random() * 1000) + 10,
-      name: payload.name,
-      email: payload.email,
-      role: 'student',
-      status: 'active',
-      timeZoneId: 'Asia/Ho_Chi_Minh',
-    }
-
-    return { user }
+    const { data } = await http.post<{ userId: number; email: string; fullName: string; role: ApiRole }>(
+      '/api/v1/auth/register/student',
+      {
+        email: payload.email,
+        password: payload.password,
+        fullName: payload.name,
+        phone: payload.phone,
+        timeZoneId: 'Asia/Ho_Chi_Minh',
+      }
+    )
+    return { user: toUser(data) }
   },
 
   async registerTutor(payload: RegisterTutorPayload): Promise<{ user: AuthUser }> {
-    try {
-      const res = await http.post<{ user: AuthUser }>('/api/v1/auth/register/tutor', payload)
-      if (res.data?.user) return res.data
-    } catch {
-      // Fallback
-    }
-
-    await delay(500)
-    if (payload.email.includes('taken')) {
-      const error = new Error('Email này đã được sử dụng')
-      throw error
-    }
-
-    const user: AuthUser = {
-      id: Math.floor(Math.random() * 1000) + 10,
-      name: payload.name,
-      email: payload.email,
-      role: 'tutor',
-      status: 'active',
-      timeZoneId: 'Asia/Ho_Chi_Minh',
-    }
-
-    return { user }
+    const { data } = await http.post<{ userId: number; email: string; fullName: string; role: ApiRole }>(
+      '/api/v1/auth/register/tutor',
+      {
+        email: payload.email,
+        password: payload.password,
+        fullName: payload.name,
+        phone: payload.phone,
+        timeZoneId: 'Asia/Ho_Chi_Minh',
+      }
+    )
+    return { user: toUser(data) }
   },
 
   async forgotPassword(payload: ForgotPasswordPayload): Promise<void> {
-    try {
-      await http.post('/api/v1/auth/forgot-password', payload)
-      return
-    } catch {
-      // Fallback
-    }
+    await http.post('/api/v1/auth/forgot-password', payload)
+  },
 
-    await delay(400)
+  async verifyEmail(token: string): Promise<VerifyEmailResponse | string> {
+    const { data } = await http.get<VerifyEmailResponse | string>('/api/v1/auth/verify-email', {
+      params: { token },
+    })
+    return data
+  },
+
+  async resendVerificationEmail(payload: ResendVerificationEmailPayload): Promise<void> {
+    await http.post('/api/v1/auth/resend-verification-email', payload)
+  },
+
+  async validateResetToken(token: string): Promise<{ isValid: boolean; message?: string }> {
+    const { data } = await http.post<{ isValid: boolean; message?: string }>(
+      '/api/v1/auth/validate-reset-token',
+      { token }
+    )
+    // trả cả message để UI có thể hiển thị lý do token không hợp lệ
+    return data
   },
 
   async resetPassword(payload: ResetPasswordPayload): Promise<void> {
-    try {
-      await http.post('/api/v1/auth/reset-password', payload)
-      return
-    } catch {
-      // Fallback
-    }
-
-    await delay(400)
-  },
-
-  async changePassword(payload: ChangePasswordPayload): Promise<void> {
-    try {
-      await http.put('/api/v1/users/me', payload)
-      return
-    } catch {
-      // Fallback
-    }
-
-    await delay(400)
+    await http.post('/api/v1/auth/reset-password', {
+      token: payload.token,
+      newPassword: payload.newPassword,
+      confirmPassword: payload.confirmPassword,
+    })
   },
 
   async me(): Promise<AuthUser> {
-    try {
-      const res = await http.get<AuthUser>('/api/v1/users/me')
-      if (res.data?.email) {
-        return res.data
-      }
-    } catch {
-      // Fallback
-    }
-
-    await delay(300)
-    const token = tokenStorage.getAccess()
-    if (!token) {
-      const error = new Error('unauthenticated')
-      error.name = 'Unauthorized'
-      throw error
-    }
-
-    if (token.includes('admin')) {
-      return {
-        id: 1,
-        name: 'Quản trị hệ thống',
-        email: 'admin@demo.com',
-        role: 'admin',
-        status: 'active',
-        timeZoneId: 'Asia/Ho_Chi_Minh',
-      }
-    }
-
-    if (token.includes('tutor')) {
-      return {
-        id: 2,
-        name: 'Gia sư mô phỏng',
-        email: 'tutor@demo.com',
-        role: 'tutor',
-        status: 'active',
-        timeZoneId: 'Asia/Ho_Chi_Minh',
-      }
-    }
-
-    return {
-      id: 3,
-      name: 'Học viên mô phỏng',
-      email: 'student@demo.com',
-      role: 'student',
-      status: 'active',
-      timeZoneId: 'Asia/Ho_Chi_Minh',
-    }
+    const { data } = await http.get<{
+      id: number
+      email: string
+      fullName: string
+      phone?: string
+      role: ApiRole
+      status: ApiStatus
+      timeZoneId?: string
+    }>('/api/v1/users/me')
+    return toUser(data)
   },
 
-  async refresh(): Promise<{ accessToken: string; refreshToken?: string }> {
-    try {
-      const refresh = tokenStorage.getRefresh()
-      const res = await http.post<{ accessToken: string; refreshToken?: string }>(
-        '/api/v1/auth/refresh',
-        { refreshToken: refresh },
-      )
-      if (res.data?.accessToken) {
-        tokenStorage.set(res.data.accessToken, res.data.refreshToken)
-        return res.data
-      }
-    } catch {
-      // Fallback
-    }
-
-    await delay(300)
-    const refresh = tokenStorage.getRefresh()
-    if (!refresh) {
-      const error = new Error('missingRefreshToken')
-      error.name = 'Unauthorized'
-      throw error
-    }
-
-    const role = refresh.includes('admin')
-      ? 'admin'
-      : refresh.includes('tutor')
-      ? 'tutor'
-      : 'student'
-
-    const accessToken = `mock-access-token-${role}`
-    const refreshToken = `mock-refresh-token-${role}`
-
-    tokenStorage.set(accessToken, refreshToken)
-    return { accessToken, refreshToken }
+  async refresh(): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: string }> {
+    const refreshToken = tokenStorage.getRefresh()
+    if (!refreshToken) throw new Error('Không có refresh token')
+    const { data } = await http.post<{ accessToken: string; refreshToken: string; expiresIn: string }>(
+      '/api/v1/auth/refresh',
+      { refreshToken }
+    )
+    tokenStorage.set(data.accessToken, data.refreshToken)
+    return data
   },
 
   async logout(): Promise<void> {
+    const refreshToken = tokenStorage.getRefresh()
     try {
-      await http.post('/api/v1/auth/logout')
-    } catch {
-      // Ignore
+      await http.post('/api/v1/auth/logout', { refreshToken })
     } finally {
       tokenStorage.clear()
     }
+  },
+
+  async changePassword(_payload: { currentPassword: string; newPassword: string }): Promise<never> {
+    throw new Error('API contract v2 chưa cung cấp endpoint đổi mật khẩu khi đã đăng nhập.')
   },
 }

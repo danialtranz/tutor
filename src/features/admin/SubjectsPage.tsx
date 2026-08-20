@@ -20,7 +20,6 @@ export function SubjectsPage() {
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
-  const [category, setCategory] = useState('Khoa học Tự nhiên')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<'active' | 'inactive'>('active')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -49,20 +48,23 @@ export function SubjectsPage() {
     setEditingSubject(null)
     setCode(`SUB-${Math.floor(Math.random() * 90 + 10)}`)
     setName('')
-    setCategory('Khoa học Tự nhiên')
     setDescription('')
     setStatus('active')
     setIsModalOpen(true)
   }
 
-  const handleOpenEdit = (subject: Subject) => {
-    setEditingSubject(subject)
-    setCode(subject.code)
-    setName(subject.name)
-    setCategory(subject.category)
-    setDescription(subject.description)
-    setStatus(subject.status)
-    setIsModalOpen(true)
+  const handleOpenEdit = async (subject: Subject) => {
+    try {
+      const detail = await adminApi.getSubjectDetail(subject.id)
+      setEditingSubject(detail)
+      setCode(detail.code)
+      setName(detail.name)
+      setDescription(detail.description)
+      setStatus(detail.status)
+      setIsModalOpen(true)
+    } catch {
+      toast.error('Không thể tải chi tiết môn học')
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -78,19 +80,21 @@ export function SubjectsPage() {
         await adminApi.updateSubject(editingSubject.id, {
           code,
           name,
-          category,
           description,
-          status,
         })
+        if ((editingSubject.status === 'active') !== (status === 'active')) {
+          await adminApi.setSubjectStatus(editingSubject.id, status === 'active')
+        }
         toast.success(`Đã cập nhật môn học "${name}"`)
       } else {
-        await adminApi.createSubject({
+        const created = await adminApi.createSubject({
           code,
           name,
-          category,
           description,
-          status,
         })
+        if (status === 'inactive') {
+          await adminApi.setSubjectStatus(created.id, false)
+        }
         toast.success(`Đã thêm môn học mới "${name}"`)
       }
       setIsModalOpen(false)
@@ -134,20 +138,6 @@ export function SubjectsPage() {
       ),
     },
     {
-      key: 'category',
-      header: 'Danh Mục',
-      render: (row) => (
-        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-xs font-bold border border-slate-200/60 dark:border-slate-700">
-          🏷️ {row.category}
-        </span>
-      ),
-    },
-    {
-      key: 'tutorCount',
-      header: 'Số Gia Sư',
-      render: (row) => <span className="text-xs font-bold text-slate-800 dark:text-slate-200">👨‍🏫 {row.tutorCount} gia sư</span>,
-    },
-    {
       key: 'status',
       header: 'Trạng Thái',
       render: (row) => (
@@ -167,7 +157,7 @@ export function SubjectsPage() {
       header: 'Thao tác',
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleOpenEdit(row)}>
+          <Button size="sm" variant="outline" onClick={() => void handleOpenEdit(row)}>
             ✏️ Sửa
           </Button>
           <Button size="sm" variant="danger" onClick={() => setDeletingSubject(row)}>
@@ -225,18 +215,6 @@ export function SubjectsPage() {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               required
-            />
-            <Select
-              label="Danh mục"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              options={[
-                { label: 'Khoa học Tự nhiên', value: 'Khoa học Tự nhiên' },
-                { label: 'Khoa học Xã hội', value: 'Khoa học Xã hội' },
-                { label: 'Ngoại ngữ', value: 'Ngoại ngữ' },
-                { label: 'Công nghệ Thông tin', value: 'Công nghệ Thông tin' },
-                { label: 'Nghệ thuật / Kỹ năng', value: 'Nghệ thuật / Kỹ năng' },
-              ]}
             />
           </div>
 

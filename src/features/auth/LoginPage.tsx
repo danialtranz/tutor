@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from './auth.store'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useToast } from '@/components/ui/ToastContext'
+import { authApi } from './auth.api'
 
 interface LocationState {
   from?: { pathname: string }
@@ -14,9 +16,11 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login, status, error } = useAuthStore()
+  const toast = useToast()
 
-  const [email, setEmail] = useState('admin@tutor.com')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isResendingVerification, setIsResendingVerification] = useState(false)
 
   const redirectTo = (location.state as LocationState)?.from?.pathname ?? '/'
 
@@ -25,19 +29,37 @@ export function LoginPage() {
     try {
       await login({ email, password })
       const currentUser = useAuthStore.getState().user
-      if (currentUser?.role === 'admin') {
-        navigate('/admin/dashboard', { replace: true })
+      if (redirectTo !== '/') {
+        navigate(redirectTo, { replace: true })
         return
       }
-      navigate(redirectTo, { replace: true })
+      if (currentUser?.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true })
+      } else if (currentUser?.role === 'tutor') {
+        navigate('/tutor/profile', { replace: true })
+      } else {
+        navigate('/', { replace: true })
+      }
     } catch {
       /* error surfaced via store */
     }
   }
 
-  const fillDemo = (roleEmail: string) => {
-    setEmail(roleEmail)
-    setPassword('password')
+  async function handleResendVerificationEmail() {
+    if (!email.trim() || !email.includes('@')) {
+      toast.warning('Vui lòng nhập địa chỉ email hợp lệ trước.')
+      return
+    }
+
+    setIsResendingVerification(true)
+    try {
+      await authApi.resendVerificationEmail({ email: email.trim() })
+      toast.success('Email xác minh đã được gửi lại. Vui lòng kiểm tra hộp thư.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Không thể gửi lại email xác minh.')
+    } finally {
+      setIsResendingVerification(false)
+    }
   }
 
   return (
@@ -57,49 +79,6 @@ export function LoginPage() {
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
             Chào mừng bạn quay trở lại với GiaSưConnect
           </p>
-        </div>
-
-        {/* Quick Demo Role Picker */}
-        <div className="mt-6 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block text-center mb-2">
-            Thao tác nhanh Demo:
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => fillDemo('admin@tutor.com')}
-              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                email.startsWith('admin')
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              👑 Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('tutor@demo.com')}
-              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                email.startsWith('tutor')
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              👨‍🏫 Gia sư
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('student@demo.com')}
-              className={`px-2 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                email.startsWith('student')
-                  ? 'bg-brand-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              🎓 Học viên
-            </button>
-          </div>
-
         </div>
 
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
@@ -137,6 +116,15 @@ export function LoginPage() {
               {t('auth.invalidCredentials')}
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => void handleResendVerificationEmail()}
+            disabled={isResendingVerification}
+            className="text-xs font-bold text-brand-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-brand-400"
+          >
+            {isResendingVerification ? 'Đang gửi lại email xác minh...' : 'Chưa xác minh email? Gửi lại email xác minh'}
+          </button>
 
           <Button type="submit" variant="gradient" size="lg" loading={status === 'loading'} className="mt-2 w-full">
             {t('auth.login')}

@@ -11,9 +11,6 @@ import StudentLayout from '@/components/layout/StudentLayout'
 const HomePage = lazy(() =>
   import('@/pages/HomePage').then((m) => ({ default: m.HomePage })),
 )
-const UsersListPage = lazy(() =>
-  import('@/features/users/UsersListPage').then((m) => ({ default: m.UsersListPage })),
-)
 const LoginPage = lazy(() =>
   import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
@@ -36,6 +33,9 @@ const ResetPasswordPage = lazy(() =>
   import('@/features/auth/ResetPasswordPage').then((m) => ({
     default: m.ResetPasswordPage,
   })),
+)
+const VerifyEmailPage = lazy(() =>
+  import('@/features/auth/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })),
 )
 const AdminLayout = lazy(() =>
   import('@/features/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
@@ -77,6 +77,12 @@ const StudentProgressPage = lazy(
 const StudentProfilePage = lazy(
   () => import('@/features/student/pages/StudentProfilePage'),
 )
+const TutorProfilePage = lazy(() =>
+  import('@/pages/TutorProfile').then((m) => ({ default: m.TutorProfilePage })),
+)
+const TutorTimetablePage = lazy(() =>
+  import('@/pages/tutorTimetable').then((m) => ({ default: m.TutorTimetablePage })),
+)
 
 const StudentScheduleDetailPage = lazy(
   () => import('@/features/student/pages/StudentScheduleDetailPage'),
@@ -91,6 +97,7 @@ export const router = createBrowserRouter([
   { path: '/register/tutor', element: <TutorRegisterPage /> },
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
+  { path: '/verify-email', element: <VerifyEmailPage /> },
   { path: '/unauthorized', element: <UnauthorizedPage /> },
 
   { path: '/', element: <HomePage /> },
@@ -100,7 +107,13 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { path: 'users', element: <UsersListPage /> },
+          {
+            element: <RoleBasedRoute allowedRoles={['tutor']} />,
+            children: [
+              { path: 'tutor/profile', element: <TutorProfilePage /> },
+              { path: 'tutor/timetable', element: <TutorTimetablePage /> },
+            ],
+          },
           {
             element: <RoleBasedRoute allowedRoles={['admin']} />,
             children: [
