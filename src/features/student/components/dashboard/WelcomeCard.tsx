@@ -1,8 +1,7 @@
-import { Wallet } from 'lucide-react'
-import type { User } from '../../types/users.type'
+import type { AuthUser } from '@/features/auth/auth.types'
 
 interface WelcomeCardProps {
-  user: User
+  user: AuthUser
   todaySessionsCount: number
   // activeGoalsCount?: number
 }
@@ -25,7 +24,7 @@ export default function WelcomeCard({ user, todaySessionsCount }: WelcomeCardPro
 
           <div>
             <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
-              Xin chào, {user.fullName}
+              Xin chào, {user.name}
             </h1>
 
             <p className="mt-1 max-w-md text-xs font-medium text-indigo-100/90">

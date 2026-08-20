@@ -19,6 +19,7 @@ export default function CancelBookingTab({
 }: CancelBookingTabProps) {
   console.log('status: ', bookingStatus)
   const isConfirmed = bookingStatus === BookingStatus.Confirmed
+  const isPeding = bookingStatus === BookingStatus.Pending
 
   const isCancelled = bookingStatus === BookingStatus.Cancelled
 
@@ -39,7 +40,7 @@ export default function CancelBookingTab({
       </div>
     )
   }
-  if (!isConfirmed) {
+  if (!isConfirmed && !isPeding) {
     return (
       <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-800 dark:bg-gray-950">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
@@ -51,7 +52,7 @@ export default function CancelBookingTab({
         </h4>
 
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Chỉ những buổi học đã được xác nhận mới có thể thực hiện hủy.
+          Chỉ những buổi học đã được xác nhận hoặc đang xử lý mới có thể thực hiện hủy.
         </p>
       </div>
     )

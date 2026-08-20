@@ -1,5 +1,6 @@
 import React from 'react'
 import { Loader2, ShieldAlert, AlertTriangle, CheckCircle } from 'lucide-react'
+import { BookingStatus } from '@/constants/enums'
 
 interface ComplaintTabProps {
   complaintType: string
@@ -13,6 +14,7 @@ interface ComplaintTabProps {
   myComplaint?: any
   againstMeComplaint?: any
   isLoading?: boolean
+  bookingStatus?: number
 }
 
 export default function ComplaintTab({
@@ -27,6 +29,7 @@ export default function ComplaintTab({
   myComplaint,
   againstMeComplaint,
   isLoading = false,
+  bookingStatus,
 }: ComplaintTabProps) {
   if (isLoading) {
     return (
@@ -36,7 +39,25 @@ export default function ComplaintTab({
       </div>
     )
   }
+  const isCompleted = bookingStatus === BookingStatus.Completed
 
+  if (!isCompleted) {
+    return (
+      <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-800 dark:bg-gray-950">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <AlertTriangle className="h-6 w-6 text-gray-500" />
+        </div>
+
+        <h4 className="mt-3 text-sm font-bold text-gray-800 dark:text-gray-200">
+          Không thể khiếu nại
+        </h4>
+
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Chỉ những buổi học đã hoàn thành mới có thể khiếu nại.
+        </p>
+      </div>
+    )
+  }
   return (
     <div className="mt-5 space-y-4">
       {/* 1. HIỂN THỊ KHIẾU NẠI MÀ NGƯỜI KHÁC KHIẾU NẠI BẠN (Nếu có) */}

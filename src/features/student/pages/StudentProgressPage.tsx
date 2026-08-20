@@ -7,32 +7,50 @@ import {
   CheckCircle2,
   Circle,
   Clock3,
+  Edit2,
   Flag,
+  Plus,
   Target,
+  Trash2,
   TrendingUp,
+  X,
 } from 'lucide-react'
+import { Toaster, toast } from 'react-hot-toast'
 import { studentApi } from '@/features/student/api/studentApi'
-import type { LearningGoal } from '../types/learningGoal.types'
+import type {
+  CreateMilestoneRequest,
+  LearningGoal,
+  Milestone,
+  UpdateMilestoneRequest,
+} from '../types/learningGoal.types'
 import { LearningStatus } from '@/constants/enums'
 
-interface Milestone {
-  id: number
-  learningGoalId: number
-  title: string
-  description?: string
-  targetDate: string
-  orderNumber: number
-  status: number
-}
-
-interface GoalWithMilestones extends LearningGoal {
-  milestones?: Milestone[]
-}
-
 export default function StudentProgressPage() {
-  const [goals, setGoals] = useState<GoalWithMilestones[]>([])
+  const [goals, setGoals] = useState<LearningGoal[]>([])
   const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // --- States quản lý Modal Create/Edit Milestone ---
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  // --- States quản lý Xóa Goal ---
+  const [deletingGoalId, setDeletingGoalId] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Form State
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [targetDate, setTargetDate] = useState('')
+  const [orderNumber, setOrderNumber] = useState(1)
+
+  // Chuỗi ISO YYYY-MM-DD của hôm nay dùng cho attribute min
+  const todayString = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return today.toISOString().split('T')[0]
+  }, [])
 
   useEffect(() => {
     fetchGoals()
@@ -41,10 +59,9 @@ export default function StudentProgressPage() {
   const fetchGoals = async () => {
     try {
       setLoading(true)
-
       const response = await studentApi.getMyGoals()
 
-      const data: GoalWithMilestones[] = Array.isArray(response)
+      const data: LearningGoal[] = Array.isArray(response)
         ? response
         : Array.isArray((response as any)?.data)
           ? (response as any).data
@@ -52,12 +69,14 @@ export default function StudentProgressPage() {
 
       setGoals(data)
 
-      // Chỉ chọn goal đầu tiên nếu chưa có goal nào được chọn
       if (data.length > 0) {
         setSelectedGoalId((current) => current ?? data[0]?.id ?? null)
+      } else {
+        setSelectedGoalId(null)
       }
     } catch (error) {
       console.error('Không thể tải mục tiêu học tập:', error)
+      toast.error('Không thể tải mục tiêu học tập!')
       setGoals([])
     } finally {
       setLoading(false)
@@ -66,18 +85,150 @@ export default function StudentProgressPage() {
 
   const selectedGoal = useMemo(() => {
     if (!selectedGoalId) return undefined
-
     return goals.find((goal) => goal.id === selectedGoalId)
   }, [goals, selectedGoalId])
 
-  const milestones = useMemo(() => {
+  const milestones: Milestone[] = useMemo(() => {
     if (!selectedGoal?.milestones) return []
-
     return [...selectedGoal.milestones].sort((a, b) => a.orderNumber - b.orderNumber)
   }, [selectedGoal])
 
+  // --- Handlers Xóa Goal ---
+  const handleDeleteGoal = async () => {
+    if (!deletingGoalId) return
+
+    try {
+      setIsDeleting(true)
+      await studentApi.deleteLearningGoal(deletingGoalId)
+
+      toast.success('Đã xóa mục tiêu học tập!')
+
+      // Cập nhật danh sách local
+      const updatedGoals = goals.filter((g) => g.id !== deletingGoalId)
+      setGoals(updatedGoals)
+
+      // Chuyển selection sang goal khác nếu goal bị xóa đang chọn
+      if (selectedGoalId === deletingGoalId) {
+        setSelectedGoalId(updatedGoals.length > 0 ? (updatedGoals[0]?.id ?? null) : null)
+      }
+
+      setDeletingGoalId(null)
+    } catch (error) {
+      console.error('Lỗi khi xóa mục tiêu:', error)
+      toast.error('Không thể xóa mục tiêu học tập!')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // --- Handlers Modal & CRUD Milestone ---
+
+  const handleOpenCreateModal = () => {
+    setEditingMilestone(null)
+    setTitle('')
+    setDescription('')
+    setTargetDate('')
+    setOrderNumber(milestones.length + 1)
+    setIsModalOpen(true)
+  }
+
+  const handleOpenEditModal = (milestone: Milestone) => {
+    setEditingMilestone(milestone)
+    setTitle(milestone.title)
+    setDescription(milestone.description || '')
+    const formattedDate = milestone.targetDate
+      ? new Date(milestone.targetDate).toISOString().split('T')[0] || ''
+      : ''
+
+    setTargetDate(formattedDate)
+    setOrderNumber(milestone.orderNumber)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setEditingMilestone(null)
+  }
+
+  const handleSubmitMilestone = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedGoalId) return
+
+    if (!title.trim()) {
+      toast.error('Vui lòng nhập tên cột mốc!')
+      return
+    }
+
+    if (!targetDate) {
+      toast.error('Vui lòng chọn hạn hoàn thành!')
+      return
+    }
+
+    const selectedDate = new Date(targetDate)
+    const today = new Date()
+    selectedDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+
+    if (selectedDate < today) {
+      toast.error('Hạn hoàn thành không được nằm trong quá khứ!')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const payload: CreateMilestoneRequest | UpdateMilestoneRequest = {
+        title: title.trim(),
+        description: description.trim(),
+        targetDate,
+        orderNumber: Number(orderNumber),
+      }
+
+      if (editingMilestone) {
+        await studentApi.updateMilestone(selectedGoalId, editingMilestone.id, payload)
+        toast.success('Cập nhật cột mốc thành công!')
+      } else {
+        await studentApi.createMilestone(selectedGoalId, payload)
+        toast.success('Thêm cột mốc mới thành công!')
+      }
+
+      await fetchGoals()
+      handleCloseModal()
+    } catch (error) {
+      console.error('Lỗi khi lưu cột mốc:', error)
+      toast.error('Có lỗi xảy ra khi lưu cột mốc!')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleToggleStatus = async (milestone: Milestone) => {
+    if (!selectedGoalId) return
+
+    const newStatus =
+      milestone.status === LearningStatus.Completed
+        ? LearningStatus.InProgress || 1
+        : LearningStatus.Completed
+
+    try {
+      await studentApi.updateMilestoneStatus(selectedGoalId, milestone.id, {
+        status: newStatus,
+      })
+      toast.success(
+        newStatus === LearningStatus.Completed
+          ? 'Đã đánh dấu hoàn thành!'
+          : 'Đã chuyển về trạng thái đang làm',
+      )
+      await fetchGoals()
+    } catch (error) {
+      console.error('Lỗi khi cập nhật trạng thái cột mốc:', error)
+      toast.error('Không thể cập nhật trạng thái cột mốc!')
+    }
+  }
+
+  // --- Calculated Data ---
+
   const completedMilestones = milestones.filter(
-    (milestone) => milestone.status === LearningStatus.Completed,
+    (milestone: Milestone) => milestone.status === LearningStatus.Completed,
   ).length
 
   const progress =
@@ -85,14 +236,17 @@ export default function StudentProgressPage() {
       ? Math.round((completedMilestones / milestones.length) * 100)
       : 0
 
-  const nextMilestone = milestones.find((milestone) => milestone.status !== 2)
+  const nextMilestone = milestones.find(
+    (milestone: Milestone) => milestone.status !== LearningStatus.Completed,
+  )
 
   const completedGoals = goals.filter((goal) => {
-    const goalMilestones = goal.milestones ?? []
-
+    const goalMilestones: Milestone[] = goal.milestones ?? []
     return (
       goalMilestones.length > 0 &&
-      goalMilestones.every((milestone) => milestone.status === LearningStatus.Completed)
+      goalMilestones.every(
+        (milestone: Milestone) => milestone.status === LearningStatus.Completed,
+      )
     )
   }).length
 
@@ -105,7 +259,7 @@ export default function StudentProgressPage() {
     (total, goal) =>
       total +
       (goal.milestones?.filter(
-        (milestone) => milestone.status === LearningStatus.Completed,
+        (milestone: Milestone) => milestone.status === LearningStatus.Completed,
       ).length ?? 0),
     0,
   )
@@ -117,7 +271,6 @@ export default function StudentProgressPage() {
 
   const formatDate = (date?: string) => {
     if (!date) return 'Chưa xác định'
-
     return new Date(date).toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
@@ -127,7 +280,6 @@ export default function StudentProgressPage() {
 
   const getDaysRemaining = (date?: string) => {
     if (!date) return null
-
     const target = new Date(date)
     const today = new Date()
 
@@ -150,6 +302,7 @@ export default function StudentProgressPage() {
   if (goals.length === 0) {
     return (
       <div className="space-y-6">
+        <Toaster position="top-right" />
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">
             Tiến độ học tập
@@ -179,6 +332,8 @@ export default function StudentProgressPage() {
 
   return (
     <div className="space-y-6 pb-10">
+      <Toaster position="top-right" />
+
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
@@ -206,7 +361,6 @@ export default function StudentProgressPage() {
               {goals.length}
             </span>
           </div>
-
           <p className="mt-3 text-xs font-semibold text-gray-600 dark:text-gray-400">
             Tổng mục tiêu
           </p>
@@ -219,7 +373,6 @@ export default function StudentProgressPage() {
               {completedGoals}
             </span>
           </div>
-
           <p className="mt-3 text-xs font-semibold text-gray-600 dark:text-gray-400">
             Mục tiêu hoàn thành
           </p>
@@ -232,7 +385,6 @@ export default function StudentProgressPage() {
               {totalCompletedMilestones}
             </span>
           </div>
-
           <p className="mt-3 text-xs font-semibold text-gray-600 dark:text-gray-400">
             Mốc đã hoàn thành
           </p>
@@ -245,7 +397,6 @@ export default function StudentProgressPage() {
               {overallProgress}%
             </span>
           </div>
-
           <p className="mt-3 text-xs font-semibold text-gray-600 dark:text-gray-400">
             Tiến độ tổng thể
           </p>
@@ -259,21 +410,18 @@ export default function StudentProgressPage() {
             <p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
               Mục tiêu của bạn
             </p>
-
             <h2 className="mt-1 text-lg font-black text-gray-900 dark:text-white">
               Chọn mục tiêu để xem tiến độ
             </h2>
           </div>
-
           <BookOpen className="h-5 w-5 text-gray-400" />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {goals.map((goal) => {
-            const goalMilestones = goal.milestones ?? []
-
+            const goalMilestones: Milestone[] = goal.milestones ?? []
             const completed = goalMilestones.filter(
-              (milestone) => milestone.status === LearningStatus.Completed,
+              (m: Milestone) => m.status === LearningStatus.Completed,
             ).length
 
             const percent =
@@ -284,32 +432,43 @@ export default function StudentProgressPage() {
             const isSelected = selectedGoalId === goal.id
 
             return (
-              <button
+              <div
                 key={goal.id}
-                type="button"
                 onClick={() => setSelectedGoalId(goal.id)}
-                className={`rounded-2xl border p-4 text-left transition-all ${
+                className={`group relative cursor-pointer rounded-2xl border p-4 transition-all ${
                   isSelected
                     ? 'border-indigo-500 bg-indigo-50/70 shadow-sm dark:border-indigo-500 dark:bg-indigo-950/30'
                     : 'border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-white dark:border-gray-800 dark:bg-gray-950/40 dark:hover:border-indigo-700 dark:hover:bg-gray-900'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-bold text-gray-900 dark:text-white">
                       {goal.title}
                     </h3>
-
                     {goal.description && (
                       <p className="mt-1 line-clamp-2 text-xs text-gray-500">
                         {goal.description}
                       </p>
                     )}
                   </div>
-
-                  {isSelected && (
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-indigo-600" />
-                  )}
+                  <div className="flex items-center gap-1">
+                    {/* Nút Xóa Goal */}
+                    <button
+                      type="button"
+                      title="Xóa mục tiêu"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeletingGoalId(goal.id)
+                      }}
+                      className="rounded-lg p-1 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    {isSelected && (
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-indigo-600" />
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4">
@@ -317,7 +476,6 @@ export default function StudentProgressPage() {
                     <span className="text-gray-500">Tiến độ</span>
                     <span className="text-indigo-600">{percent}%</span>
                   </div>
-
                   <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
                     <div
                       className="h-full rounded-full bg-indigo-500 transition-all"
@@ -325,7 +483,7 @@ export default function StudentProgressPage() {
                     />
                   </div>
                 </div>
-              </button>
+              </div>
             )
           })}
         </div>
@@ -343,11 +501,19 @@ export default function StudentProgressPage() {
                       MỤC TIÊU ĐANG XEM
                     </span>
                   </div>
-
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">
-                    {selectedGoal.title}
-                  </h2>
-
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">
+                      {selectedGoal.title}
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setDeletingGoalId(selectedGoal.id)}
+                      className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+                      title="Xóa mục tiêu này"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
                   {selectedGoal.description && (
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
                       {selectedGoal.description}
@@ -367,7 +533,6 @@ export default function StudentProgressPage() {
                         strokeWidth="9"
                         className="text-gray-100 dark:text-gray-800"
                       />
-
                       <circle
                         cx="50"
                         cy="50"
@@ -436,11 +601,9 @@ export default function StudentProgressPage() {
                   <p className="text-[11px] font-bold tracking-wider text-indigo-500 uppercase">
                     Cột mốc tiếp theo
                   </p>
-
                   <h3 className="mt-1 text-base font-black text-gray-900 dark:text-white">
                     {nextMilestone.title}
                   </h3>
-
                   <p className="mt-1 text-xs text-gray-500">
                     Hạn mục tiêu: {formatDate(nextMilestone.targetDate)}
                   </p>
@@ -459,27 +622,37 @@ export default function StudentProgressPage() {
             </section>
           )}
 
-          {/* Timeline */}
+          {/* Timeline Section */}
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
-                <CalendarDays className="h-5 w-5" />
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400">
+                  <CalendarDays className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-gray-900 dark:text-white">
+                    Lộ trình mục tiêu
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Các cột mốc theo thứ tự hoàn thành
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h2 className="text-base font-black text-gray-900 dark:text-white">
-                  Lộ trình mục tiêu
-                </h2>
-                <p className="text-xs text-gray-500">
-                  Các cột mốc theo thứ tự hoàn thành
-                </p>
-              </div>
+              {/* Button Thêm Cột Mốc Mới */}
+              <button
+                type="button"
+                onClick={handleOpenCreateModal}
+                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm cột mốc
+              </button>
             </div>
 
             {milestones.length === 0 ? (
               <div className="rounded-2xl bg-gray-50 p-8 text-center dark:bg-gray-950/50">
                 <Flag className="mx-auto h-8 w-8 text-gray-300" />
-
                 <p className="mt-3 text-sm font-semibold text-gray-500">
                   Chưa có cột mốc nào cho mục tiêu này.
                 </p>
@@ -495,11 +668,14 @@ export default function StudentProgressPage() {
 
                     return (
                       <div key={milestone.id} className="relative flex gap-4">
-                        <div
-                          className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-4 border-white dark:border-gray-900 ${
+                        {/* Nút check trạng thái */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(milestone)}
+                          className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-4 border-white transition-transform active:scale-90 dark:border-gray-900 ${
                             completed
                               ? 'bg-emerald-500 text-white'
-                              : 'bg-white text-gray-400 shadow-sm dark:bg-gray-900'
+                              : 'bg-white text-gray-400 shadow-sm hover:text-emerald-500 dark:bg-gray-900'
                           }`}
                         >
                           {completed ? (
@@ -507,7 +683,7 @@ export default function StudentProgressPage() {
                           ) : (
                             <Circle className="h-4 w-4" />
                           )}
-                        </div>
+                        </button>
 
                         <div
                           className={`min-w-0 flex-1 rounded-2xl border p-4 ${
@@ -517,12 +693,11 @@ export default function StudentProgressPage() {
                           }`}
                         >
                           <div className="flex flex-col justify-between gap-2 sm:flex-row">
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-black text-gray-400">
-                                  #{index + 1}
+                                  #{milestone.orderNumber || index + 1}
                                 </span>
-
                                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                                   {milestone.title}
                                 </h3>
@@ -535,27 +710,40 @@ export default function StudentProgressPage() {
                               )}
                             </div>
 
-                            <div className="shrink-0 text-left sm:text-right">
-                              <p className="flex items-center gap-1 text-xs font-semibold text-gray-500 sm:justify-end">
-                                <CalendarDays className="h-3.5 w-3.5" />
-                                {formatDate(milestone.targetDate)}
-                              </p>
+                            <div className="flex shrink-0 items-start gap-3 sm:flex-col sm:items-end">
+                              <div className="text-left sm:text-right">
+                                <p className="flex items-center gap-1 text-xs font-semibold text-gray-500 sm:justify-end">
+                                  <CalendarDays className="h-3.5 w-3.5" />
+                                  {formatDate(milestone.targetDate)}
+                                </p>
 
-                              {completed ? (
-                                <span className="mt-1 inline-block text-[10px] font-bold text-emerald-600">
-                                  ĐÃ HOÀN THÀNH
-                                </span>
-                              ) : daysRemaining !== null ? (
-                                <span
-                                  className={`mt-1 inline-block text-[10px] font-bold ${
-                                    daysRemaining < 0 ? 'text-red-500' : 'text-amber-600'
-                                  }`}
-                                >
-                                  {daysRemaining < 0
-                                    ? `Quá hạn ${Math.abs(daysRemaining)} ngày`
-                                    : `Còn ${daysRemaining} ngày`}
-                                </span>
-                              ) : null}
+                                {completed ? (
+                                  <span className="mt-1 inline-block text-[10px] font-bold text-emerald-600">
+                                    ĐÃ HOÀN THÀNH
+                                  </span>
+                                ) : daysRemaining !== null ? (
+                                  <span
+                                    className={`mt-1 inline-block text-[10px] font-bold ${
+                                      daysRemaining < 0
+                                        ? 'text-red-500'
+                                        : 'text-amber-600'
+                                    }`}
+                                  >
+                                    {daysRemaining < 0
+                                      ? `Quá hạn ${Math.abs(daysRemaining)} ngày`
+                                      : `Còn ${daysRemaining} ngày`}
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Action edit milestone */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditModal(milestone)}
+                                className="rounded-lg p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -574,12 +762,10 @@ export default function StudentProgressPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400">
                   <Award className="h-6 w-6" />
                 </div>
-
                 <div>
                   <h3 className="font-black text-gray-900 dark:text-white">
                     Mục tiêu đã hoàn thành! 🎉
                   </h3>
-
                   <p className="mt-1 text-xs text-gray-500">
                     Bạn đã hoàn thành toàn bộ các cột mốc của mục tiêu này.
                   </p>
@@ -588,6 +774,140 @@ export default function StudentProgressPage() {
             </section>
           )}
         </>
+      )}
+
+      {/* Modal Xóa Goal */}
+      {deletingGoalId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400">
+              <Trash2 className="h-6 w-6" />
+            </div>
+
+            <h3 className="mt-4 text-lg font-bold text-gray-900 dark:text-white">
+              Xóa mục tiêu học tập?
+            </h3>
+            <p className="mt-2 text-xs text-gray-500">
+              Hành động này sẽ xóa vĩnh viễn mục tiêu cùng với toàn bộ các cột mốc liên
+              quan.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingGoalId(null)}
+                className="rounded-xl px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeleteGoal}
+                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 active:scale-95 disabled:opacity-50"
+              >
+                {isDeleting ? 'Đang xóa...' : 'Xóa mục tiêu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Thêm / Sửa Milestone */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {editingMilestone ? 'Chỉnh sửa cột mốc' : 'Thêm cột mốc mới'}
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitMilestone} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                  Tên cột mốc <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ví dụ: Hoàn thành Chương 1"
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                  Mô tả
+                </label>
+                <textarea
+                  rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Chi tiết nội dung hoặc yêu cầu cần đạt được..."
+                  className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                    Hạn hoàn thành <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    min={todayString}
+                    value={targetDate}
+                    onChange={(e) => setTargetDate(e.target.value)}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                    Thứ tự
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={orderNumber}
+                    onChange={(e) => setOrderNumber(Number(e.target.value))}
+                    className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                >
+                  {submitting
+                    ? 'Đang lưu...'
+                    : editingMilestone
+                      ? 'Lưu thay đổi'
+                      : 'Tạo mới'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   )

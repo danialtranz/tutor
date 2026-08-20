@@ -10,11 +10,13 @@ import {
   Menu,
   X,
   User,
-  UserShield,
+  Shield,
+  GraduationCap,
 } from 'lucide-react'
 import { studentApi } from '@/features/student/api/studentApi'
 import { useQuery } from '@tanstack/react-query'
 import { UserRole } from '@/constants/enums'
+import { authApi } from '@/features/auth/auth.api'
 export const UserRoleLabel: Record<number, string> = {
   [UserRole.Admin]: 'Admin',
   [UserRole.Tutor]: 'Tutor',
@@ -24,14 +26,13 @@ export default function StudentLayout() {
   const navigate = useNavigate()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
-  // Giả lập thông tin user đang đăng nhập
   const {
     data: user,
     isLoading,
     isError,
   } = useQuery({
     queryKey: ['current-user'],
-    queryFn: studentApi.getMe,
+    queryFn: authApi.me,
   })
 
   const navItems = [
@@ -63,7 +64,7 @@ export default function StudentLayout() {
   ]
 
   const handleLogout = () => {
-    navigate('/login')
+    navigate('/')
   }
 
   return (
@@ -86,14 +87,24 @@ export default function StudentLayout() {
         <div className="flex flex-1 flex-col overflow-y-auto">
           {/* Logo Platform */}
           <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white/90 px-6 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/90">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-lg font-black text-white shadow-sm">
-                T
+            <NavLink to="/student" className="group flex items-center gap-3">
+              <div className="from-brand-600 shadow-brand-600/25 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr to-indigo-600 text-lg font-black text-white shadow-md transition-transform group-hover:scale-105">
+                <GraduationCap className="h-5 w-5" />
               </div>
-              <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-                TutorPlatform
-              </span>
-            </div>
+              <div className="flex flex-col">
+                <span
+                  className={
+                    'via-brand-200 bg-gradient-to-r from-white to-indigo-300 bg-clip-text text-lg font-extrabold text-transparent'
+                  }
+                >
+                  GiaSưConnect
+                </span>
+                <span className="-mt-1 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                  Tutor & Learning
+                </span>
+              </div>
+            </NavLink>
+
             <button
               className="rounded-lg p-1 text-gray-500 hover:bg-gray-100 lg:hidden dark:hover:bg-gray-800"
               onClick={() => setIsMobileSidebarOpen(false)}
@@ -136,14 +147,14 @@ export default function StudentLayout() {
             <div className="flex items-center gap-2.5 overflow-hidden">
               <img
                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                  user?.fullName || 'student',
+                  user?.name || 'student',
                 )}`}
                 alt="Avatar"
                 className="h-9 w-9 shrink-0 rounded-full border border-white bg-indigo-100 object-cover shadow-xs dark:border-gray-700"
               />
               <div className="truncate">
                 <p className="truncate text-xs font-bold text-gray-900 dark:text-gray-100">
-                  {user?.fullName}
+                  {user?.name}
                 </p>
                 <p className="truncate text-[11px] text-gray-400">{user?.email}</p>
               </div>
@@ -179,12 +190,12 @@ export default function StudentLayout() {
           {/* Header Right Actions */}
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Khối Hiển thị Credit */}
-            <div className="flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-              <UserShield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            {/* <div className="flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+              <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               <span>
-                {user?.role != null ? UserRoleLabel[user.role] : 'Unknown'}
+                {user?.role != null ? UserRoleLabel[user?.role] : 'Unknown'}
               </span>{' '}
-            </div>
+            </div> */}
 
             {/* Thông báo */}
             <button className="relative rounded-xl p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">

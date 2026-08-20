@@ -5,7 +5,6 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { RoleBasedRoute } from '@/features/auth/RoleBasedRoute'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage'
-import StudentLayout from '@/components/layout/StudentLayout'
 
 // Lazy loading pages
 const HomePage = lazy(() =>
@@ -61,7 +60,15 @@ const UsersManagementPage = lazy(() =>
     default: m.UsersManagementPage,
   })),
 )
-// Student Pages
+const TutorProfilePage = lazy(() =>
+  import('@/pages/TutorProfile').then((m) => ({ default: m.TutorProfilePage })),
+)
+const TutorTimetablePage = lazy(() =>
+  import('@/pages/tutorTimetable').then((m) => ({ default: m.TutorTimetablePage })),
+)
+
+// student
+const StudentLayout = lazy(() => import('@/components/layout/StudentLayout'))
 const StudentDashboardPage = lazy(
   () => import('@/features/student/pages/StudentDashboardPage'),
 )
@@ -77,12 +84,6 @@ const StudentProgressPage = lazy(
 const StudentProfilePage = lazy(
   () => import('@/features/student/pages/StudentProfilePage'),
 )
-const TutorProfilePage = lazy(() =>
-  import('@/pages/TutorProfile').then((m) => ({ default: m.TutorProfilePage })),
-)
-const TutorTimetablePage = lazy(() =>
-  import('@/pages/tutorTimetable').then((m) => ({ default: m.TutorTimetablePage })),
-)
 
 const StudentScheduleDetailPage = lazy(
   () => import('@/features/student/pages/StudentScheduleDetailPage'),
@@ -90,6 +91,7 @@ const StudentScheduleDetailPage = lazy(
 const StudentTutorDetailPage = lazy(
   () => import('@/features/student/pages/StudentTutorDetailPage'),
 )
+
 export const router = createBrowserRouter([
   // Public Auth Routes
   { path: '/login', element: <LoginPage /> },
@@ -134,26 +136,38 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      {
+        element: <RoleBasedRoute allowedRoles={['student']} />,
+        children: [
+          {
+            path: 'student',
+            element: <StudentLayout />,
+            children: [
+              { index: true, element: <StudentDashboardPage /> }, // /student
+
+              { path: 'dashboard', element: <StudentDashboardPage /> },
+
+              { path: 'tutors', element: <StudentFindTutorPage /> },
+              {
+                path: 'tutors/tutorDetail/:tutorId',
+                element: <StudentTutorDetailPage />,
+              },
+
+              { path: 'schedule', element: <StudentSchedulePage /> },
+              {
+                path: 'schedule/:scheduleId',
+                element: <StudentScheduleDetailPage />,
+              },
+              { path: 'progress', element: <StudentProgressPage /> },
+
+              { path: 'profile', element: <StudentProfilePage /> },
+            ],
+          },
+        ],
+      },
     ],
   },
-  {
-    path: 'student',
-    element: <StudentLayout />,
-    children: [
-      { index: true, element: <StudentDashboardPage /> }, // /student
 
-      { path: 'dashboard', element: <StudentDashboardPage /> },
-
-      { path: 'tutors', element: <StudentFindTutorPage /> },
-      { path: 'tutors/tutorDetail/:tutorId', element: <StudentTutorDetailPage /> },
-
-      { path: 'schedule', element: <StudentSchedulePage /> },
-      { path: 'schedule/:scheduleId', element: <StudentScheduleDetailPage /> },
-      { path: 'progress', element: <StudentProgressPage /> },
-
-      { path: 'profile', element: <StudentProfilePage /> },
-    ],
-  },
   // 404 Fallback
   { path: '*', element: <NotFoundPage /> },
 ])

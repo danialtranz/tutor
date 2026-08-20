@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import toast, { Toaster } from 'react-hot-toast'
-import { Search, Clock } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { studentApi, type TutorSearchParams } from '../api/studentApi'
 import { useNavigate } from 'react-router-dom'
+
 export default function StudentFindTutorPage() {
   const navigate = useNavigate()
   const pad = (num: number) => String(num).padStart(2, '0')
@@ -21,32 +22,31 @@ export default function StudentFindTutorPage() {
   const defaultEndTime = '20:00'
 
   // State cho Form Controls
-  const [subjectId, setSubjectId] = useState<number>(0) // 💡 0: Tất cả môn học
-  const [teachingLevel, setTeachingLevel] = useState<string>('All') // 💡 All: Tất cả cấp độ
+  const [subjectId, setSubjectId] = useState<number>(0)
+  const [teachingLevel, setTeachingLevel] = useState<string>('Primary School') // 💡 Default: Cấp 1
 
-  // State quản lý việc chọn lọc thời gian hay lấy tất cả thời gian
-  const [isAllTime, setIsAllTime] = useState<boolean>(true) // 💡 Mặc định tìm tất cả thời gian
   const [lessonDate, setLessonDate] = useState<string>(defaultDateStr)
   const [startTime, setStartTime] = useState<string>(defaultStartTime)
   const [endTime, setEndTime] = useState<string>(defaultEndTime)
 
+  // Hàm hỗ trợ tính toán ISO String từ Date + Time local
+  const getUtcTimes = (dateStr: string, startStr: string, endStr: string) => {
+    const startLocal = new Date(`${dateStr}T${startStr}`)
+    const endLocal = new Date(`${dateStr}T${endStr}`)
+    return {
+      startTimeUtc: isNaN(startLocal.getTime()) ? '' : startLocal.toISOString(),
+      endTimeUtc: isNaN(endLocal.getTime()) ? '' : endLocal.toISOString(),
+    }
+  }
+
+  const initialUtc = getUtcTimes(defaultDateStr, defaultStartTime, defaultEndTime)
+
   // State SearchParams gửi cho React Query API
   const [searchParams, setSearchParams] = useState<TutorSearchParams>({
     subjectId: 0,
-    teachingLevel: 'All',
-    startTimeUtc: '',
-    endTimeUtc: '',
-  })
-
-  // React Query gọi API lấy danh sách Gia sư
-  const {
-    data: tutors = [],
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ['tutor-search', searchParams],
-    queryFn: () => studentApi.searchTutors(searchParams),
+    teachingLevel: 'Primary School',
+    startTimeUtc: initialUtc.startTimeUtc,
+    endTimeUtc: initialUtc.endTimeUtc,
   })
 
   // Lấy danh sách Môn học
@@ -61,49 +61,61 @@ export default function StudentFindTutorPage() {
     },
   })
 
+  // 💡 Tự động set môn học đầu tiên làm mặc định khi danh sách môn được tải về
+  useEffect(() => {
+    if (subjects.length > 0 && subjectId === 0) {
+      const firstSubjectId = Number(subjects[0].id)
+      setSubjectId(firstSubjectId)
+      setSearchParams((prev) => ({
+        ...prev,
+        subjectId: firstSubjectId,
+      }))
+    }
+  }, [subjects, subjectId])
+
+  // React Query gọi API lấy danh sách Gia sư
+  const {
+    data: tutors = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['tutor-search', searchParams],
+    queryFn: () => studentApi.searchTutors(searchParams),
+    // 💡 SỬA TẠI ĐÂY: Kiểm tra safe navigation + ép kiểu Number an toàn
+    enabled: Boolean(searchParams && Number(searchParams.subjectId) > 0),
+  })
+
   // Xử lý Sự kiện Submit Form
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
 
-    let startTimeUtc = ''
-    let endTimeUtc = ''
-
-    // Nếu KHÔNG tích chọn "Tất cả thời gian", thực hiện validate ngày giờ
-    if (!isAllTime) {
-      if (!lessonDate || !startTime || !endTime) {
-        toast.error('Vui lòng chọn đầy đủ ngày và thời gian học!')
-        return
-      }
-
-      const startLocal = new Date(`${lessonDate}T${startTime}`)
-      const endLocal = new Date(`${lessonDate}T${endTime}`)
-      const now = new Date()
-
-      if (isNaN(startLocal.getTime()) || isNaN(endLocal.getTime())) {
-        toast.error('Ngày hoặc thời gian không hợp lệ!')
-        return
-      }
-
-      if (startLocal <= now) {
-        toast.error('Thời gian bắt đầu phải ở trong tương lai!')
-        return
-      }
-
-      if (endLocal <= startLocal) {
-        toast.error('Giờ kết thúc phải sau giờ bắt đầu!')
-        return
-      }
-
-      startTimeUtc = startLocal.toISOString()
-      endTimeUtc = endLocal.toISOString()
+    if (!lessonDate || !startTime || !endTime) {
+      toast.error('Vui lòng chọn đầy đủ ngày và thời gian học!')
+      return
     }
 
-    console.log('SEARCH PARAMS:', {
-      subjectId,
-      teachingLevel,
-      startTimeUtc,
-      endTimeUtc,
-    })
+    const startLocal = new Date(`${lessonDate}T${startTime}`)
+    const endLocal = new Date(`${lessonDate}T${endTime}`)
+    const now = new Date()
+
+    if (isNaN(startLocal.getTime()) || isNaN(endLocal.getTime())) {
+      toast.error('Ngày hoặc thời gian không hợp lệ!')
+      return
+    }
+
+    if (startLocal <= now) {
+      toast.error('Thời gian bắt đầu phải ở trong tương lai!')
+      return
+    }
+
+    if (endLocal <= startLocal) {
+      toast.error('Giờ kết thúc phải sau giờ bắt đầu!')
+      return
+    }
+
+    const startTimeUtc = startLocal.toISOString()
+    const endTimeUtc = endLocal.toISOString()
 
     setSearchParams({
       subjectId: Number(subjectId),
@@ -145,8 +157,6 @@ export default function StudentFindTutorPage() {
               value={subjectId}
               onChange={(e) => setSubjectId(Number(e.target.value))}
             >
-              {/* 💡 Lựa chọn tất cả môn học */}
-              <option value={0}>-- Tất cả môn học --</option>
               {Array.isArray(subjects) &&
                 subjects.map((sub: any) => (
                   <option key={sub.id} value={sub.id}>
@@ -166,12 +176,11 @@ export default function StudentFindTutorPage() {
               value={teachingLevel}
               onChange={(e) => setTeachingLevel(e.target.value)}
             >
-              {/* 💡 Lựa chọn tất cả cấp độ */}
-              <option value="All">-- Tất cả cấp độ --</option>
               <option value="Primary School">Tiểu học (Cấp 1)</option>
               <option value="Middle School">THCS (Cấp 2)</option>
               <option value="High School">THPT (Cấp 3)</option>
               <option value="University">Đại học</option>
+              <option value="IELTS">IELTS</option>
             </select>
           </div>
 
@@ -182,11 +191,10 @@ export default function StudentFindTutorPage() {
             </label>
             <input
               type="date"
-              disabled={isAllTime}
               value={lessonDate}
               min={toDateInputValue(new Date())}
               onChange={(e) => setLessonDate(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 focus:border-indigo-500 focus:outline-none disabled:bg-gray-100 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:disabled:bg-gray-900"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
             />
           </div>
 
@@ -197,10 +205,9 @@ export default function StudentFindTutorPage() {
             </label>
             <input
               type="time"
-              disabled={isAllTime}
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 focus:border-indigo-500 focus:outline-none disabled:bg-gray-100 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:disabled:bg-gray-900"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
             />
           </div>
 
@@ -211,27 +218,15 @@ export default function StudentFindTutorPage() {
             </label>
             <input
               type="time"
-              disabled={isAllTime}
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 focus:border-indigo-500 focus:outline-none disabled:bg-gray-100 disabled:opacity-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100 dark:disabled:bg-gray-900"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 focus:border-indigo-500 focus:outline-none dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
             />
           </div>
         </div>
 
-        {/* Checkbox Tất cả thời gian & Nút Tìm kiếm */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3 dark:border-gray-800">
-          <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-            <input
-              type="checkbox"
-              checked={isAllTime}
-              onChange={(e) => setIsAllTime(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-950"
-            />
-            <Clock className="h-3.5 w-3.5 text-indigo-500" />
-            <span>Tìm tất cả thời gian (Không giới hạn lịch)</span>
-          </label>
-
+        {/* Nút Tìm kiếm */}
+        <div className="mt-4 flex justify-end border-t border-gray-100 pt-3 dark:border-gray-800">
           <button
             type="submit"
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700"
@@ -242,7 +237,6 @@ export default function StudentFindTutorPage() {
         </div>
       </form>
 
-      {/* Hiển thị Danh Sách Gia Sư */}
       {/* Hiển thị Danh Sách Gia Sư */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -261,7 +255,7 @@ export default function StudentFindTutorPage() {
             Không tìm thấy gia sư nào phù hợp
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Thử thay đổi môn học, cấp độ hoặc bỏ lọc thời gian để xem thêm kết quả.
+            Thử thay đổi môn học, cấp độ hoặc khung thời gian để xem thêm kết quả.
           </p>
         </div>
       ) : (
@@ -275,7 +269,6 @@ export default function StudentFindTutorPage() {
             return (
               <div
                 key={`${item.tutorId}-${item.subjectId}-${index}`}
-                // 💡 Click vào bất kỳ đâu trên Card để sang trang chi tiết Gia sư
                 onClick={() => navigate(`tutorDetail/${item.tutorId}`)}
                 className="group relative flex cursor-pointer flex-col justify-between rounded-3xl border border-gray-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-xl dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900/60"
               >
@@ -297,7 +290,7 @@ export default function StudentFindTutorPage() {
                           {item.subjectName || 'Môn học'}
                         </span>
                         <span className="shrink-0 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                          {item.teachingLevel || 'Tất cả cấp độ'}
+                          {item.teachingLevel || 'Cấp 1'}
                         </span>
                       </div>
 
@@ -356,7 +349,6 @@ export default function StudentFindTutorPage() {
 
                   <button
                     onClick={(e) => {
-                      // 💡 Đảm bảo click nút cũng xem chi tiết mà không bị kích hoạt sự kiện trùng
                       e.stopPropagation()
                       navigate(`tutorDetail/${item.tutorId}`)
                     }}

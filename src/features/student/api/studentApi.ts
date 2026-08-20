@@ -10,7 +10,7 @@ import type {
 
 import type { Subject } from '../types/subjects.types'
 
-import type { Booking } from '../types/booking.types'
+import type { Booking, CreateBookingRequest } from '../types/booking.types'
 
 import type {
   Complaint,
@@ -37,7 +37,6 @@ export interface TutorSearchParams {
 }
 
 const BASE_URL = '/api/v1'
-
 const LEARNING_GOAL_URL = `${BASE_URL}/learning-goals`
 
 export const studentApi = {
@@ -46,9 +45,9 @@ export const studentApi = {
   // =========================
 
   getMe: async (): Promise<User> => {
-    const response = await http.get<ApiResponse<User>>('/api/v1/users/me')
-
-    return response.data.data
+    // Interceptor đã tự động bóc envelope { message, data, code } -> response.data chính là User
+    const response = await http.get<User>('/api/v1/users/me')
+    return response.data
   },
 
   // =========================
@@ -62,34 +61,22 @@ export const studentApi = {
       ),
     )
 
-    console.log('URL Params thực tế gửi BE:', cleanParams)
-
-    const response = await http.get<{
-      message: string
-      data: TutorSearchResult[]
-      code: number
-    }>('/api/v1/tutors/search', {
+    const response = await http.get<TutorSearchResult[]>('/api/v1/tutors/search', {
       params: cleanParams,
     })
 
-    console.log('SEARCH TUTORS RESPONSE:', response.data)
-
-    return response.data.data
+    return response.data
   },
 
   getTutorById: async (tutorId: number): Promise<TutorDetail> => {
-    const response = await http.get(`/api/v1/tutors/${tutorId}`)
-
-    console.log('TUTOR DETAIL API:', response.data)
-
-    return response.data.data
+    const response = await http.get<TutorDetail>(`/api/v1/tutors/${tutorId}`)
+    return response.data
   },
 
   getMyAvailabilities: async (): Promise<TutorAvailability[]> => {
     const response = await http.get<TutorAvailability[]>(
       '/api/v1/tutors/me/availabilities',
     )
-
     return response.data
   },
 
@@ -99,7 +86,6 @@ export const studentApi = {
 
   getSubjects: async (): Promise<Subject[]> => {
     const response = await http.get<Subject[]>('/api/v1/subjects')
-
     return response.data
   },
 
@@ -108,11 +94,8 @@ export const studentApi = {
     includeInactive = false,
   ): Promise<Subject> => {
     const response = await http.get<Subject>(`/api/v1/subjects/${subjectId}`, {
-      params: {
-        includeInactive,
-      },
+      params: { includeInactive },
     })
-
     return response.data
   },
 
@@ -122,26 +105,16 @@ export const studentApi = {
 
   getBookings: async (): Promise<Booking[]> => {
     const response = await http.get<Booking[]>('/api/v1/bookings')
-
     return response.data
   },
 
   getBookingDetail: async (bookingId: number | string): Promise<Booking> => {
     const response = await http.get<Booking>(`/api/v1/bookings/${bookingId}`)
-
-    console.log('BOOKING DETAIL:', response.data)
-
     return response.data
   },
 
-  cancelBooking: async (
-    bookingId: number | string,
-    payload: {
-      reason: string
-    },
-  ) => {
+  cancelBooking: async (bookingId: number | string, payload: { reason: string }) => {
     const response = await http.post(`/api/v1/bookings/${bookingId}/cancel`, payload)
-
     return response.data
   },
 
@@ -154,7 +127,6 @@ export const studentApi = {
     },
   ) => {
     const response = await http.post(`/api/v1/bookings/${bookingId}/reschedule`, payload)
-
     return response.data
   },
 
@@ -170,7 +142,6 @@ export const studentApi = {
       `/api/v1/bookings/${bookingId}/reschedule/${proposalId}/status`,
       payload,
     )
-
     return response.data
   },
 
@@ -185,7 +156,11 @@ export const studentApi = {
     },
   ) => {
     const response = await http.post(`/api/v1/bookings/${bookingId}/complete`, payload)
+    return response.data
+  },
 
+  createBooking: async (data: CreateBookingRequest): Promise<Booking> => {
+    const response = await http.post<Booking>('/api/v1/bookings', data)
     return response.data
   },
 
@@ -198,48 +173,37 @@ export const studentApi = {
     pageSize?: number
     status?: number
   }): Promise<PagedComplaints> => {
-    const response = await http.get('/api/v1/complaints', {
+    const response = await http.get<PagedComplaints>('/api/v1/complaints', {
       params,
     })
-
-    return response.data.data
+    return response.data
   },
 
   getComplaintDetail: async (complaintId: number | string): Promise<Complaint> => {
-    const response = await http.get(`/api/v1/complaints/${complaintId}`)
-
-    return response.data.data
+    const response = await http.get<Complaint>(`/api/v1/complaints/${complaintId}`)
+    return response.data
   },
+
   createComplaint: async (payload: ComplaintCreateRequest): Promise<Complaint> => {
-    const response = await http.post('/api/v1/complaints', payload)
-
-    return response.data.data
+    const response = await http.post<Complaint>('/api/v1/complaints', payload)
+    return response.data
   },
+
   // =========================
   // COMPLAINTS EXTENDED
   // =========================
 
-  // 1. Lấy danh sách Complaints do CHÍNH USER HIỆN TẠI TẠO (Student / Tutor)
   getMyCreatedComplaints: async (params?: {
     pageNumber?: number
     pageSize?: number
     status?: number
   }): Promise<PagedComplaints> => {
-    // Nếu backend có endpoint riêng:
-    // const response = await http.get<PagedComplaints>('/api/v1/complaints/my-created', { params })
-
-    // Nếu backend dùng chung endpoint GET /api/v1/complaints:
     const response = await http.get<PagedComplaints>('/api/v1/complaints', {
-      params: {
-        ...params,
-        // Một số backend yêu cầu truyền thêm flag/param để lọc
-        // scope: 'created_by_me'
-      },
+      params,
     })
     return response.data
   },
 
-  // 2. Lấy danh sách Complaints bị người khác khiếu nại (Nhắm vào mình)
   getMyReceivedComplaints: async (params?: {
     pageNumber?: number
     pageSize?: number
@@ -251,10 +215,6 @@ export const studentApi = {
     return response.data
   },
 
-  // 3. Kiểm tra trạng thái khiếu nại cho 1 Booking cụ thể
-  // Trả về:
-  // - myComplaint: Khiếu nại do BẠN tạo cho booking này (nếu có)
-  // - againstMeComplaint: Khiếu nại người khác nhắm vào BẠN cho booking này (nếu có)
   checkBookingComplaintStatus: async (
     bookingId: number | string,
     currentUserId: number | string,
@@ -265,7 +225,6 @@ export const studentApi = {
     againstMeComplaint?: Complaint
   }> => {
     try {
-      // Gọi danh sách complaint (truyền bookingId nếu backend hỗ trợ lọc theo bookingId)
       const response = await http.get<PagedComplaints>('/api/v1/complaints', {
         params: {
           bookingId,
@@ -278,19 +237,16 @@ export const studentApi = {
       const bookingIdStr = String(bookingId)
       const currentUserIdStr = String(currentUserId)
 
-      // Lọc các complaint thuộc booking này
       const bookingComplaints = items.filter(
         (item: any) => String(item.bookingId) === bookingIdStr,
       )
 
-      // 1. Do mình tạo
       const myComplaint = bookingComplaints.find(
         (item: any) =>
           String(item.createdById || item.creatorId || item.createdBy?.id) ===
           currentUserIdStr,
       )
 
-      // 2. Do người khác khiếu nại mình (againstUserId === currentUserId)
       const againstMeComplaint = bookingComplaints.find(
         (item: any) =>
           String(item.againstUserId || item.againstUser?.id) === currentUserIdStr,
@@ -310,33 +266,27 @@ export const studentApi = {
       }
     }
   },
+
   // =========================
   // LEARNING GOALS
   // =========================
 
   // POST /api/v1/learning-goals
   createLearningGoal: async (data: CreateLearningGoalRequest): Promise<LearningGoal> => {
-    const response = await http.post<ApiResponse<LearningGoal>>(LEARNING_GOAL_URL, data)
-
-    return response.data.data
+    const response = await http.post<LearningGoal>(LEARNING_GOAL_URL, data)
+    return response.data
   },
 
   // GET /api/v1/learning-goals/me
   getMyGoals: async (): Promise<LearningGoal[]> => {
-    const response = await http.get<ApiResponse<LearningGoal[]>>(
-      `${LEARNING_GOAL_URL}/me`,
-    )
-
-    return response.data.data
+    const response = await http.get<LearningGoal[]>(`${LEARNING_GOAL_URL}/me`)
+    return response.data
   },
 
   // GET /api/v1/learning-goals/{goalId}
   getLearningGoalById: async (goalId: number): Promise<LearningGoal> => {
-    const response = await http.get<ApiResponse<LearningGoal>>(
-      `${LEARNING_GOAL_URL}/${goalId}`,
-    )
-
-    return response.data.data
+    const response = await http.get<LearningGoal>(`${LEARNING_GOAL_URL}/${goalId}`)
+    return response.data
   },
 
   // PUT /api/v1/learning-goals/{goalId}
@@ -344,12 +294,8 @@ export const studentApi = {
     goalId: number,
     data: UpdateLearningGoalRequest,
   ): Promise<LearningGoal> => {
-    const response = await http.put<ApiResponse<LearningGoal>>(
-      `${LEARNING_GOAL_URL}/${goalId}`,
-      data,
-    )
-
-    return response.data.data
+    const response = await http.put<LearningGoal>(`${LEARNING_GOAL_URL}/${goalId}`, data)
+    return response.data
   },
 
   // DELETE /api/v1/learning-goals/{goalId}
@@ -357,6 +303,7 @@ export const studentApi = {
     await http.delete(`${LEARNING_GOAL_URL}/${goalId}`)
   },
 
+  // DELETE /api/v1/learning-goals/{goalId}/milestones/{milestoneId}
   deleteMilestone: async (goalId: number, milestoneId: number): Promise<void> => {
     await http.delete(`${LEARNING_GOAL_URL}/${goalId}/milestones/${milestoneId}`)
   },
@@ -366,12 +313,11 @@ export const studentApi = {
     goalId: number,
     data: CreateMilestoneRequest,
   ): Promise<Milestone> => {
-    const response = await http.post<ApiResponse<Milestone>>(
+    const response = await http.post<Milestone>(
       `${LEARNING_GOAL_URL}/${goalId}/milestones`,
       data,
     )
-
-    return response.data.data
+    return response.data
   },
 
   // PUT /api/v1/learning-goals/{goalId}/milestones/{milestoneId}
@@ -380,12 +326,11 @@ export const studentApi = {
     milestoneId: number,
     data: UpdateMilestoneRequest,
   ): Promise<Milestone> => {
-    const response = await http.put<ApiResponse<Milestone>>(
+    const response = await http.put<Milestone>(
       `${LEARNING_GOAL_URL}/${goalId}/milestones/${milestoneId}`,
       data,
     )
-
-    return response.data.data
+    return response.data
   },
 
   // PATCH /api/v1/learning-goals/{goalId}/milestones/{milestoneId}/status
@@ -394,36 +339,30 @@ export const studentApi = {
     milestoneId: number,
     data: UpdateMilestoneStatusRequest,
   ): Promise<Milestone> => {
-    const response = await http.patch<ApiResponse<Milestone>>(
+    const response = await http.patch<Milestone>(
       `${LEARNING_GOAL_URL}/${goalId}/milestones/${milestoneId}/status`,
       data,
     )
-
-    return response.data.data
+    return response.data
   },
 
-  //Review
+  // =========================
+  // REVIEWS
+  // =========================
+
   createReview: async (bookingId: number, data: CreateReviewRequest): Promise<Review> => {
-    const response = await http.post<ApiResponse<Review>>(
+    const response = await http.post<Review>(
       `/api/v1/bookings/${bookingId}/reviews`,
       data,
     )
-
-    return response.data.data
+    return response.data
   },
 
   getMyReceivedReviews: async (page = 1, pageSize = 10): Promise<ReviewListData> => {
-    const response = await http.get<ApiResponse<ReviewListData>>(
-      '/api/v1/reviews/me/received',
-      {
-        params: {
-          page,
-          pageSize,
-        },
-      },
-    )
-
-    return response.data.data
+    const response = await http.get<ReviewListData>('/api/v1/reviews/me/received', {
+      params: { page, pageSize },
+    })
+    return response.data
   },
 
   getUserReviews: async (
@@ -431,16 +370,9 @@ export const studentApi = {
     page = 1,
     pageSize = 10,
   ): Promise<ReviewListData> => {
-    const response = await http.get<ApiResponse<ReviewListData>>(
-      `/api/v1/users/${userId}/reviews`,
-      {
-        params: {
-          page,
-          pageSize,
-        },
-      },
-    )
-
-    return response.data.data
+    const response = await http.get<ReviewListData>(`/api/v1/users/${userId}/reviews`, {
+      params: { page, pageSize },
+    })
+    return response.data
   },
 }

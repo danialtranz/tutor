@@ -73,7 +73,7 @@ export default function LearningProgressTab({
               <input
                 type="text"
                 placeholder="Tên mục tiêu..."
-                className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                 value={goalForm.title}
                 onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })}
                 required
@@ -81,7 +81,7 @@ export default function LearningProgressTab({
               <textarea
                 rows={2}
                 placeholder="Mô tả..."
-                className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                 value={goalForm.description}
                 onChange={(e) =>
                   setGoalForm({ ...goalForm, description: e.target.value })
@@ -89,7 +89,7 @@ export default function LearningProgressTab({
               />
               <input
                 type="date"
-                className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                className="w-full min-w-0 rounded-lg border border-gray-200 bg-white p-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
                 value={goalForm.targetDate}
                 min={new Date().toISOString().split('T')[0]}
                 onChange={(e) => setGoalForm({ ...goalForm, targetDate: e.target.value })}
@@ -97,7 +97,7 @@ export default function LearningProgressTab({
               <button
                 type="submit"
                 disabled={submittingGoal}
-                className="w-full rounded-lg bg-indigo-600 py-2 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                className="w-full rounded-lg bg-indigo-600 py-2.5 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
               >
                 {submittingGoal ? (
                   <Loader2 className="mx-auto h-3.5 w-3.5 animate-spin" />
@@ -135,19 +135,19 @@ export default function LearningProgressTab({
                         : 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
                     }`}
                   >
-                    <div className="flex justify-between text-xs font-bold">
-                      <span className="text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center justify-between gap-2 text-xs font-bold">
+                      <span className="truncate text-gray-900 dark:text-gray-100">
                         {goal.title}
                       </span>
 
-                      <span className="text-indigo-600 dark:text-indigo-400">
+                      <span className="shrink-0 text-indigo-600 dark:text-indigo-400">
                         {progress}%
                       </span>
                     </div>
 
                     <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
                       <div
-                        className="h-full rounded-full bg-indigo-500"
+                        className="h-full rounded-full bg-indigo-500 transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -163,7 +163,7 @@ export default function LearningProgressTab({
           {selectedGoal ? (
             <>
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-950/30">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
                     {selectedGoal.title}
                   </h3>
@@ -176,12 +176,15 @@ export default function LearningProgressTab({
                 )}
               </div>
 
-              {/* Form thêm Milestone */}
-              <form onSubmit={handleCreateMilestone} className="flex gap-2">
+              {/* Form thêm Milestone (Đã tối ưu Responsive cho Mobile & Tablet) */}
+              <form
+                onSubmit={handleCreateMilestone}
+                className="flex flex-col gap-2.5 sm:flex-row sm:items-center"
+              >
                 <input
                   type="text"
                   placeholder="Tên cột mốc..."
-                  className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+                  className="w-full flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
                   value={milestoneForm.title}
                   onChange={(e) =>
                     setMilestoneForm({
@@ -191,40 +194,47 @@ export default function LearningProgressTab({
                   }
                   required
                 />
-                <input
-                  type="date"
-                  className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-                  value={milestoneForm.targetDate}
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) =>
-                    setMilestoneForm({
-                      ...milestoneForm,
-                      targetDate: e.target.value,
-                    })
-                  }
-                />
-                <button
-                  type="submit"
-                  disabled={submittingMilestone}
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  + Thêm
-                </button>
+                <div className="flex w-full items-center gap-2 sm:w-auto">
+                  <input
+                    type="date"
+                    className="w-full min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:w-auto dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+                    value={milestoneForm.targetDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) =>
+                      setMilestoneForm({
+                        ...milestoneForm,
+                        targetDate: e.target.value,
+                      })
+                    }
+                  />
+                  <button
+                    type="submit"
+                    disabled={submittingMilestone}
+                    className="shrink-0 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {submittingMilestone ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      '+ Thêm'
+                    )}
+                  </button>
+                </div>
               </form>
 
-              {/* Danh sách Milestone */}
+              {/* Danh sách Milestone (Đã tối ưu bọc dòng tự động trên màn hình hẹp) */}
               <div className="space-y-2">
                 {selectedGoal.milestones?.map((m) => {
                   const isDone = m.status === LearningStatus.Completed
                   return (
                     <div
                       key={m.id}
-                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900"
+                      className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800 dark:bg-gray-900"
                     >
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-start gap-2.5 sm:items-center">
                         <button
+                          type="button"
                           onClick={() => handleToggleMilestoneStatus(m)}
-                          className="text-indigo-600"
+                          className="mt-0.5 shrink-0 text-indigo-600 sm:mt-0"
                         >
                           {isDone ? (
                             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -233,7 +243,7 @@ export default function LearningProgressTab({
                           )}
                         </button>
                         <span
-                          className={`text-xs font-medium ${
+                          className={`text-xs font-medium break-all ${
                             isDone
                               ? 'text-gray-400 line-through'
                               : 'text-gray-800 dark:text-gray-200'
@@ -242,13 +252,15 @@ export default function LearningProgressTab({
                           {m.title}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3">
+
+                      <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-2 sm:justify-end sm:border-t-0 sm:pt-0 dark:border-gray-800">
                         <span className="text-[11px] text-gray-400">
                           {formatDisplayDate(m.targetDate)}
                         </span>
                         <button
+                          type="button"
                           onClick={() => handleDeleteMilestone(m.id)}
-                          className="text-gray-400 hover:text-rose-500"
+                          className="text-gray-400 transition hover:text-rose-500"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

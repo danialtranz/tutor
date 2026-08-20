@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { studentApi } from '../api/studentApi'
+import { authApi } from '@/features/auth/auth.api'
 
 export const useCurrentUser = () => {
   return useQuery({
     queryKey: ['currentUser'],
-    queryFn: studentApi.getMe,
+    queryFn: async () => {
+      const response = await authApi.me()
+      return response
+    },
   })
 }

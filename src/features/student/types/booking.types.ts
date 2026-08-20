@@ -48,3 +48,16 @@ export interface CompleteBookingPayload {
   goalProgressPercent: number
   tutorComment: string
 }
+export interface CreateBookingRequest {
+  tutorSubjectId: number
+  startTimeUtc: string
+  endTimeUtc: string
+  creditCost: number
+  studentNote?: string
+}
+
+export interface ApiResponse<T> {
+  message: string
+  data: T
+  code: number
+}

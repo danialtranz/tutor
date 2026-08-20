@@ -1,5 +1,7 @@
-import { Calendar, Clock, Search, Video } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Calendar, Clock, Search, Video, User, BookOpen } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { studentApi } from '../../api/studentApi'
 import type { Booking } from '../../types/booking.types'
 
 interface UpcomingBookingCardProps {
@@ -11,6 +13,33 @@ export default function UpcomingBookingCard({
   nextBooking,
   isLoading,
 }: UpcomingBookingCardProps) {
+  // Lấy tutorId từ nextBooking (nếu có)
+  const tutorId =
+    nextBooking?.tutorSubjectId || (nextBooking as any)?.tutorSubject?.tutorId
+
+  // Fetch thông tin chi tiết của Gia sư để lấy Tên & Avatar chuẩn
+  const { data: tutorDetail } = useQuery({
+    queryKey: ['tutor-detail', tutorId],
+    queryFn: () => studentApi.getTutorById(tutorId!),
+    enabled: !!tutorId,
+  })
+
+  // Bóc tách dữ liệu Gia sư & Môn học
+  const tutorName =
+    tutorDetail?.fullName ||
+    (nextBooking as any)?.tutorName ||
+    (nextBooking as any)?.tutorSubject?.tutorName ||
+    `Gia sư #${tutorId || ''}`
+
+  const subjectName =
+    (nextBooking as any)?.subjectName ||
+    (nextBooking as any)?.tutorSubject?.subject?.name ||
+    `Buổi học #${nextBooking?.id}`
+
+  const avatarUrl =
+    (nextBooking as any)?.tutorAvatar ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${tutorName}`
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-4 flex items-center justify-between">
@@ -44,30 +73,48 @@ export default function UpcomingBookingCard({
         <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 sm:flex-row sm:items-center dark:border-indigo-950/80 dark:bg-indigo-950/30">
           <div className="flex items-center gap-4">
             <img
-              src={'https://api.dicebear.com/7.x/avataaars/svg?seed=tutor'}
-              alt="Avatar Gia sư"
+              src={avatarUrl}
+              alt={`Avatar ${tutorName}`}
               className="h-14 w-14 rounded-full border-2 border-white object-cover shadow-sm dark:border-gray-800"
             />
             <div>
-              <span className="mb-1 inline-block rounded-md bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                Sắp diễn ra
-              </span>
-              <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">
-                {nextBooking.status}
+              <div className="mb-1 flex items-center gap-2">
+                <span className="inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                  Sắp diễn ra
+                </span>
+                {nextBooking.creditCost && (
+                  <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
+                    {nextBooking.creditCost} credits
+                  </span>
+                )}
+              </div>
+
+              {/* TÊN MÔN HỌC */}
+              <h4 className="flex items-center gap-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
+                <BookOpen className="h-4 w-4 text-indigo-500" />
+                {subjectName}
               </h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                Gia sư:{' '}
+
+              {/* TÊN GIA SƯ */}
+              <p className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                <User className="h-3.5 w-3.5" /> Gia sư:{' '}
                 <span className="font-semibold text-gray-800 dark:text-gray-200">
-                  {nextBooking.creditCost}
+                  {tutorName}
                 </span>
               </p>
+
+              {/* THỜI GIAN */}
               <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
                 <Calendar className="h-3.5 w-3.5" />
-                {new Date(nextBooking.startTimeUtc).toLocaleString('vi-VN')}
+                {new Date(nextBooking.startTimeUtc).toLocaleString('vi-VN', {
+                  dateStyle: 'full',
+                  timeStyle: 'short',
+                })}
               </p>
             </div>
           </div>
 
+          {/* VÀO PHÒNG HỌC */}
           {nextBooking.meetingUrl ? (
             <a
               href={nextBooking.meetingUrl}
@@ -75,7 +122,7 @@ export default function UpcomingBookingCard({
               rel="noreferrer"
               className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-center text-xs font-bold text-white shadow-sm transition hover:bg-indigo-700 sm:w-auto"
             >
-              <Video className="h-4 w-4" /> Vào phòng học (Google Meet)
+              <Video className="h-4 w-4" /> Vào phòng học
             </a>
           ) : (
             <span className="text-xs text-gray-400 italic dark:text-gray-500">

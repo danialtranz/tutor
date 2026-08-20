@@ -1,8 +1,15 @@
-import React, { useState } from 'react'
-import { Loader2, Send, CalendarCheck, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import {
+  Loader2,
+  Send,
+  CalendarCheck,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+} from 'lucide-react'
 import { RescheduleRequestStatus } from '@/constants/enums'
 
-// Interface cho một Proposal dời lịch từ API
 export interface RescheduleProposal {
   id: number | string
   proposedStartTimeUtc: string
@@ -20,13 +27,11 @@ interface RescheduleData {
 
 interface RescheduleTabProps {
   bookingId: number | string
-  // Yêu cầu đổi lịch hiện có (nếu có)
   pendingProposal?: RescheduleProposal | null
   rescheduleData: RescheduleData
   setRescheduleData: React.Dispatch<React.SetStateAction<RescheduleData>>
   submittingSchedule: boolean
   onSubmitCreateProposal: (e: React.FormEvent) => void
-  // Handler xử lý Đồng ý / Từ chối yêu cầu
   onUpdateProposalStatus?: (
     proposalId: number | string,
     status: number,
@@ -43,9 +48,20 @@ export default function RescheduleTab({
   onUpdateProposalStatus,
 }: RescheduleTabProps) {
   const [responseNote, setResponseNote] = useState('')
-  const [processingStatus, setProcessingStatus] = useState<number | null>(null) // 1: Approve, 2: Reject
+  const [processingStatus, setProcessingStatus] = useState<number | null>(null)
 
-  // Helper format hiển thị ngày giờ thân thiện
+  // State quản lý Ngày, Giờ bắt đầu và Giờ kết thúc tách biệt
+  const [selectedDate, setSelectedDate] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
+
+  // Ngày tối thiểu có thể chọn (Hôm nay)
+  const minDateStr = useMemo(() => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  }, [])
+
+  // Helper format hiển thị ngày giờ
   const formatDateTime = (isoString: string) => {
     if (!isoString) return ''
     const date = new Date(isoString)
@@ -60,7 +76,75 @@ export default function RescheduleTab({
         })
   }
 
-  // Xử lý Phản hồi Yêu cầu (Đồng ý / Từ chối)
+  // Cập nhật giá trị vào state cha (rescheduleData) mỗi khi chọn Ngày / Giờ
+  const updateParentState = (date: string, start: string, end: string) => {
+    if (date && start) {
+      const startIso = new Date(`${date}T${start}`).toISOString()
+      const endIso = end ? new Date(`${date}T${end}`).toISOString() : ''
+
+      setRescheduleData((prev) => ({
+        ...prev,
+        proposedStartTimeUtc: startIso,
+        proposedEndTimeUtc: endIso,
+      }))
+    }
+  }
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setSelectedDate(val)
+    updateParentState(val, startTime, endTime)
+  }
+
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setStartTime(val)
+    updateParentState(selectedDate, val, endTime)
+  }
+
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setEndTime(val)
+    updateParentState(selectedDate, startTime, val)
+  }
+
+  // ==========================================
+  // LOGIC VALIDATION
+  // ==========================================
+  const validation = useMemo(() => {
+    if (!selectedDate || !startTime || !endTime) {
+      return { isValid: false, errorMsg: null }
+    }
+
+    const startDateTime = new Date(`${selectedDate}T${startTime}`)
+    const endDateTime = new Date(`${selectedDate}T${endTime}`)
+    const now = new Date()
+
+    // 1. Kiểm tra thời gian bắt đầu có trong tương lai không
+    if (startDateTime <= now) {
+      return {
+        isValid: false,
+        errorMsg: 'Thời gian bắt đầu dời lịch phải ở trong tương lai.',
+      }
+    }
+
+    // 2. Kiểm tra giờ bắt đầu < giờ kết thúc
+    if (endDateTime <= startDateTime) {
+      return {
+        isValid: false,
+        errorMsg: 'Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.',
+      }
+    }
+
+    // 3. Lý do dời lịch không được để trống
+    if (!rescheduleData.reason.trim()) {
+      return { isValid: false, errorMsg: null }
+    }
+
+    return { isValid: true, errorMsg: null }
+  }, [selectedDate, startTime, endTime, rescheduleData.reason])
+
+  // Handlers xử lý Đồng ý / Từ chối
   const handleAction = async (status: number) => {
     if (!pendingProposal || !onUpdateProposalStatus) return
     setProcessingStatus(status)
@@ -80,14 +164,12 @@ export default function RescheduleTab({
   ) {
     return (
       <div className="mt-5 space-y-4 rounded-2xl border border-amber-200/80 bg-amber-50/50 p-5 dark:border-amber-900/50 dark:bg-amber-950/20">
-        {/* Header Thông báo */}
         <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
           <Clock className="h-5 w-5 shrink-0" />
           <h4 className="text-sm font-bold">Đang có yêu cầu dời lịch học mới</h4>
         </div>
 
-        {/* Thông tin thời gian đề xuất */}
-        <div className="rounded-xl border border-amber-200 bg-white p-3.5 text-xs shadow-sm dark:border-amber-900/80 dark:bg-gray-900">
+        <div className="rounded-xl border border-amber-200 bg-white p-3.5 text-xs shadow-xs dark:border-amber-900/80 dark:bg-gray-900">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <span className="text-gray-500 dark:text-gray-400">
@@ -117,7 +199,6 @@ export default function RescheduleTab({
           )}
         </div>
 
-        {/* Ghi chú phản hồi */}
         <div>
           <label className="mb-1 block text-xs font-bold text-gray-700 dark:text-gray-300">
             Ghi chú phản hồi (Không bắt buộc)
@@ -127,16 +208,15 @@ export default function RescheduleTab({
             placeholder="Nhập ghi chú phản hồi..."
             value={responseNote}
             onChange={(e) => setResponseNote(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 outline-hidden focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           />
         </div>
 
-        {/* Action Buttons: Đồng ý / Từ chối */}
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <button
             type="button"
             disabled={processingStatus !== null}
-            onClick={() => handleAction(1)} // 1: Approve
+            onClick={() => handleAction(1)}
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
           >
             {processingStatus === RescheduleRequestStatus.Accepted ? (
@@ -150,7 +230,7 @@ export default function RescheduleTab({
           <button
             type="button"
             disabled={processingStatus !== null}
-            onClick={() => handleAction(RescheduleRequestStatus.Rejected)} // 2: Reject
+            onClick={() => handleAction(RescheduleRequestStatus.Rejected)}
             className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-50"
           >
             {processingStatus === RescheduleRequestStatus.Rejected ? (
@@ -165,7 +245,7 @@ export default function RescheduleTab({
     )
   }
 
-  // 💡 TRƯỜNG HỢP 2: KHÔNG CÓ YÊU CẦU ĐANG CHỜ -> HIỂN THỊ FORM ĐỀ XUẤT DỜI LỊCH MỚI
+  // 💡 TRƯỜNG HỢP 2: TẠO FORM ĐỀ XUẤT DỜI LỊCH MỚI
   return (
     <form onSubmit={onSubmitCreateProposal} className="mt-5 space-y-4">
       <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
@@ -173,52 +253,68 @@ export default function RescheduleTab({
         <span>Đề xuất khung thời gian dời lịch mới</span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* 1. CHỌN NGÀY DỜI LỊCH */}
         <div>
           <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-            Thời gian bắt đầu mới
+            Chọn ngày dời lịch <span className="text-red-500">*</span>
           </label>
           <input
-            type="datetime-local"
-            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-            value={rescheduleData.proposedStartTimeUtc}
-            onChange={(e) =>
-              setRescheduleData({
-                ...rescheduleData,
-                proposedStartTimeUtc: e.target.value,
-              })
-            }
+            type="date"
+            min={minDateStr}
+            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 outline-hidden transition focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+            value={selectedDate}
+            onChange={handleDateChange}
             required
           />
         </div>
 
+        {/* 2. CHỌN GIỜ BẮT ĐẦU */}
         <div>
           <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-            Thời gian kết thúc mới
+            Giờ bắt đầu <span className="text-red-500">*</span>
           </label>
           <input
-            type="datetime-local"
-            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
-            value={rescheduleData.proposedEndTimeUtc}
-            onChange={(e) =>
-              setRescheduleData({
-                ...rescheduleData,
-                proposedEndTimeUtc: e.target.value,
-              })
-            }
+            type="time"
+            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 outline-hidden transition focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+            value={startTime}
+            onChange={handleStartTimeChange}
+            required
+          />
+        </div>
+
+        {/* 3. CHỌN GIỜ KẾT THÚC */}
+        <div>
+          <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
+            Giờ kết thúc <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="time"
+            className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 outline-hidden transition focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+            value={endTime}
+            onChange={handleEndTimeChange}
             required
           />
         </div>
       </div>
 
+      {/* CẢNH BÁO VALIDATION NẾU CÓ LỖI */}
+      {validation.errorMsg && (
+        <div className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{validation.errorMsg}</span>
+        </div>
+      )}
+
+      {/* 4. LÝ DO DỜI LỊCH */}
       <div>
         <label className="mb-1.5 block text-xs font-bold text-gray-700 dark:text-gray-300">
-          Lý do dời lịch
+          Lý do dời lịch <span className="text-red-500">*</span>
         </label>
         <textarea
           rows={3}
           placeholder="Nhập lý do dời lịch gửi đến đối phương..."
-          className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 transition outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
+          className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-xs text-gray-900 outline-hidden transition focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100"
           value={rescheduleData.reason}
           onChange={(e) =>
             setRescheduleData({
@@ -230,10 +326,11 @@ export default function RescheduleTab({
         />
       </div>
 
+      {/* SUBMIT BUTTON */}
       <button
         type="submit"
-        disabled={submittingSchedule}
-        className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+        disabled={submittingSchedule || !validation.isValid}
+        className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submittingSchedule ? (
           <Loader2 className="h-4 w-4 animate-spin" />
