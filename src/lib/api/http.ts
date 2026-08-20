@@ -63,6 +63,8 @@ async function refreshSession(): Promise<void> {
   tokenStorage.set(data.accessToken, data.refreshToken)
 }
 
+// Unwrap the backend envelope { message, data, code } → return the inner `data`
+// so callers can do `res.data.accessToken` instead of `res.data.data.accessToken`.
 http.interceptors.response.use(
   (response) => {
     const body = response.data as Partial<ApiEnvelope<unknown>>
