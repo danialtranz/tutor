@@ -127,17 +127,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     </>
                   )}
                 </NavLink>
-                <NavLink to="/users" className={linkClass} onClick={onClose}>
-                  <Users className="h-[18px] w-[18px] shrink-0 opacity-80" />
-                  <span>Danh sách Người dùng</span>
-                </NavLink>
               </>
-            ) : (
-              <NavLink to="/users" className={linkClass} onClick={onClose}>
-                <Users className="h-[18px] w-[18px] shrink-0 opacity-80" />
-                <span>Danh sách Người dùng</span>
-              </NavLink>
-            )}
+            ) : null}
           </nav>
         </div>
 
