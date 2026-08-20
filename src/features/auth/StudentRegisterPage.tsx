@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/ToastContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { authApi } from './auth.api'
+import { ApiError } from '@/lib/api/http'  
 import type { RegisterStudentPayload } from './auth.types'
 
 export function StudentRegisterPage() {
@@ -18,6 +19,7 @@ export function StudentRegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   const isValid =
     form.name.trim() &&
@@ -28,6 +30,7 @@ export function StudentRegisterPage() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError(null)
+    setEmailError(null) 
 
     if (form.password !== confirmPassword) {
       setError('Mật khẩu và xác nhận mật khẩu phải trùng khớp')
@@ -83,7 +86,10 @@ export function StudentRegisterPage() {
             type="email"
             placeholder="hocvien@example.com"
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={(e) => {
+                setForm({ ...form, email: e.target.value })
+                if (emailError) setEmailError(null)   // 👈 xoá lỗi khi user sửa lại email
+              }}
             required
           />
           <Input
