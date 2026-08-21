@@ -6,19 +6,41 @@ import {
   GraduationCap,
   User,
   Sparkles,
+  Send,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useToast } from '@/components/ui/ToastContext'
+import { ApiError } from '@/lib/api/http'
 import { tutorProfileApi } from '@/apis/fe2/tutorProfile.api'
-import type { TutorApprovalStatus, TutorOwnerProfileResponse } from '@/apis/fe2/tutorProfile.types'
+import type {
+  TutorApprovalStatus,
+  TutorOwnerProfileResponse,
+  TutorSubjectResponse,
+} from '@/apis/fe2/tutorProfile.types'
 import { getRankBadge, tutorCard } from './profileTheme'
 
 interface Props {
   profile: TutorOwnerProfileResponse
+  subjects: TutorSubjectResponse[]
   onUpdated: (updated: TutorOwnerProfileResponse) => void
   averageRating?: number
   reviewCount?: number
   reputationScore?: number
+}
+
+function mapSubmitError(message: string): string {
+  const lower = message.toLowerCase()
+  if (lower.includes('only a draft')) {
+    return 'Chỉ hồ sơ ở trạng thái Nháp mới gửi duyệt được. Nếu bị từ chối, hãy chỉnh sửa rồi lưu lại trước.'
+  }
+  if (lower.includes('qualification is required')) {
+    return 'Vui lòng điền trình độ giảng dạy trước khi gửi duyệt.'
+  }
+  if (lower.includes('at least one active tutorsubject')) {
+    return 'Cần ít nhất một môn học đang hoạt động trước khi gửi duyệt.'
+  }
+  return message || 'Gửi duyệt thất bại. Vui lòng thử lại.'
 }
 
 const APPROVAL_LABELS: Record<TutorApprovalStatus, { label: string; color: string }> = {
@@ -45,11 +67,13 @@ function normalizeApprovalStatus(status: TutorOwnerProfileResponse['approvalStat
 
 export function ProfileInfoSection({
   profile,
+  subjects,
   onUpdated,
   averageRating,
   reviewCount,
   reputationScore = 50,
 }: Props) {
+  const toast = useToast()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -67,6 +91,9 @@ export function ProfileInfoSection({
   const displayRating = averageRating ?? profile.averageRating
   const displayReviewCount = reviewCount ?? profile.reviewCount
   const rankLabel = getRankBadge(reputationScore)
+  const hasQualification = Boolean(profile.qualification?.trim())
+  const hasActiveSubject = subjects.some((s) => s.isActive && s.subject.isActive)
+  const canSubmit = approvalStatus === 'Draft' && hasQualification && hasActiveSubject
 
   function handleChange(field: string, value: string | number) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -84,21 +111,39 @@ export function ProfileInfoSection({
       })
       onUpdated(updated)
       setEditing(false)
+      toast.success('Đã lưu hồ sơ')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Update failed')
+      setError(e instanceof Error ? e.message : 'Cập nhật thất bại')
     } finally {
       setSaving(false)
     }
   }
 
   async function handleSubmit() {
+    if (!hasQualification) {
+      setError('Vui lòng điền trình độ giảng dạy trước khi gửi duyệt.')
+      return
+    }
+    if (!hasActiveSubject) {
+      setError('Cần ít nhất một môn học đang hoạt động trước khi gửi duyệt.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
       const updated = await tutorProfileApi.submitMyProfile()
       onUpdated(updated)
+      toast.success('Đã gửi hồ sơ. Chờ quản trị viên duyệt.')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Submit failed')
+      const message =
+        e instanceof ApiError
+          ? mapSubmitError(e.message)
+          : e instanceof Error
+            ? mapSubmitError(e.message)
+            : 'Gửi duyệt thất bại'
+      setError(message)
+      toast.error(message)
     } finally {
       setSubmitting(false)
     }
@@ -247,21 +292,64 @@ export function ProfileInfoSection({
           </button>
         )}
 
-        {!editing && (approvalStatus === 'Draft' || approvalStatus === 'Rejected') && (
+        {!editing && approvalStatus === 'Draft' && (
           <div className="border-t border-white/[0.06] pt-4">
             <div className="flex items-start gap-2">
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand-400" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold text-white">Gửi hồ sơ để duyệt</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-                  Sau khi gửi, quản trị sẽ xem xét trước khi hồ sơ công khai.
+                  Cần có trình độ giảng dạy và ít nhất một môn đang hoạt động. Sau khi gửi, admin sẽ xét duyệt.
                 </p>
+                {(!hasQualification || !hasActiveSubject) && (
+                  <ul className="mt-2 space-y-1 text-[11px] text-amber-200/90">
+                    {!hasQualification && <li>• Chưa có trình độ giảng dạy</li>}
+                    {!hasActiveSubject && <li>• Chưa có môn học đang hoạt động</li>}
+                  </ul>
+                )}
               </div>
-              <Button onClick={handleSubmit} loading={submitting} size="sm" className="shrink-0">
-                Gửi
+              <Button
+                onClick={handleSubmit}
+                loading={submitting}
+                disabled={!canSubmit}
+                size="sm"
+                className="shrink-0 gap-1.5"
+              >
+                <Send className="h-3.5 w-3.5" />
+                Gửi duyệt
               </Button>
             </div>
             {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+          </div>
+        )}
+
+        {!editing && approvalStatus === 'Rejected' && (
+          <div className="border-t border-white/[0.06] pt-4">
+            <div className="flex items-start gap-2">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-white">Hồ sơ bị từ chối</p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+                  Chỉnh sửa và lưu hồ sơ để chuyển về Nháp, sau đó mới gửi duyệt lại.
+                </p>
+              </div>
+              <Button
+                onClick={() => setEditing(true)}
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+              >
+                Chỉnh sửa
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!editing && approvalStatus === 'Pending' && (
+          <div className="border-t border-white/[0.06] pt-4">
+            <p className="text-[11px] leading-relaxed text-slate-500">
+              Hồ sơ đang chờ admin duyệt. Bạn sẽ nhận kết quả sau khi xét duyệt xong.
+            </p>
           </div>
         )}
       </div>

@@ -90,6 +90,7 @@ export function TutorProfileView() {
           <div className="col-span-12 lg:col-span-3">
             <ProfileInfoSection
               profile={profile}
+              subjects={subjects}
               onUpdated={setProfile}
               averageRating={averageRating}
               reviewCount={reviewCount}
