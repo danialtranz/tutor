@@ -1,11 +1,22 @@
-import React from 'react'
-import { Plus, Trash2, CheckCircle2, Circle, Loader2 } from 'lucide-react'
+import React, { useState } from 'react'
+import {
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  Pencil,
+  Check,
+  X,
+} from 'lucide-react'
 
 import type {
   LearningGoal,
   Milestone,
   CreateLearningGoalRequest,
   CreateMilestoneRequest,
+  UpdateLearningGoalRequest,
+  UpdateMilestoneRequest,
 } from '../../types/learningGoal.types'
 import { LearningStatus } from '@/constants/enums'
 
@@ -35,6 +46,13 @@ interface LearningProgressTabProps {
   handleToggleMilestoneStatus: (milestone: Milestone) => void
   handleDeleteMilestone: (id: number) => void
 
+  // NEW: Handlers Cập nhật
+  handleUpdateGoal: (goalId: number, data: UpdateLearningGoalRequest) => Promise<void>
+  handleUpdateMilestone: (
+    milestoneId: number,
+    data: UpdateMilestoneRequest,
+  ) => Promise<void>
+
   // Utils
   calculateProgress: (milestones?: Milestone[]) => number
   formatDisplayDate: (date?: string) => string
@@ -56,9 +74,85 @@ export default function LearningProgressTab({
   handleCreateMilestone,
   handleToggleMilestoneStatus,
   handleDeleteMilestone,
+  handleUpdateGoal,
+  handleUpdateMilestone,
   calculateProgress,
   formatDisplayDate,
 }: LearningProgressTabProps) {
+  // --- Local states cho Sửa Goal ---
+  const [isEditingGoal, setIsEditingGoal] = useState(false)
+  const [editingGoalForm, setEditingGoalForm] = useState<UpdateLearningGoalRequest>({
+    title: '',
+    description: '',
+    targetDate: '',
+  })
+  const [updatingGoal, setUpdatingGoal] = useState(false)
+
+  // --- Local states cho Sửa Milestone ---
+  const [editingMilestoneId, setEditingMilestoneId] = useState<number | null>(null)
+  const [editingMilestoneForm, setEditingMilestoneForm] =
+    useState<UpdateMilestoneRequest>({
+      title: '',
+      description: '',
+      targetDate: '',
+      orderNumber: 0,
+    })
+  const [updatingMilestone, setUpdatingMilestone] = useState(false)
+
+  // Handlers Sửa Goal
+  const startEditingGoal = () => {
+    if (!selectedGoal) return
+
+    setIsEditingGoal(true)
+
+    setEditingGoalForm({
+      title: selectedGoal.title,
+      description: selectedGoal.description || '',
+      targetDate: selectedGoal.targetDate?.split('T')[0] ?? '',
+    })
+  }
+  const cancelEditingGoal = () => {
+    setIsEditingGoal(false)
+  }
+
+  const onSubmitUpdateGoal = async () => {
+    if (!selectedGoal || !editingGoalForm.title.trim()) return
+    try {
+      setUpdatingGoal(true)
+      await handleUpdateGoal(selectedGoal.id, editingGoalForm)
+      setIsEditingGoal(false)
+    } finally {
+      setUpdatingGoal(false)
+    }
+  }
+
+  // Handlers Sửa Milestone
+  const startEditingMilestone = (m: Milestone) => {
+    setEditingMilestoneId(m.id)
+
+    setEditingMilestoneForm({
+      title: m.title,
+      description: m.description || '',
+      targetDate: m.targetDate?.split('T')[0] ?? '',
+      orderNumber: m.orderNumber || 0,
+    })
+  }
+
+  const cancelEditingMilestone = () => {
+    setEditingMilestoneId(null)
+  }
+
+  const onSubmitUpdateMilestone = async (milestoneId: number) => {
+    if (!editingMilestoneForm.title.trim()) return
+    try {
+      setUpdatingMilestone(true)
+      await handleUpdateMilestone(milestoneId, editingMilestoneForm)
+      setEditingMilestoneId(null)
+    } finally {
+      setUpdatingMilestone(false)
+    }
+  }
+
   return (
     <div className="mt-5 space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -128,7 +222,10 @@ export default function LearningProgressTab({
                 return (
                   <div
                     key={goal.id}
-                    onClick={() => handleSelectGoal(goal.id)}
+                    onClick={() => {
+                      if (selectedGoal?.id !== goal.id) setIsEditingGoal(false)
+                      handleSelectGoal(goal.id)
+                    }}
                     className={`cursor-pointer rounded-xl border p-3 transition ${
                       isSelected
                         ? 'border-indigo-500 bg-indigo-50/30 dark:border-indigo-500 dark:bg-indigo-950/20'
@@ -162,21 +259,101 @@ export default function LearningProgressTab({
         <div className="space-y-4 lg:col-span-7">
           {selectedGoal ? (
             <>
+              {/* Header Goal / Form Sửa Goal Inline */}
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-950/30">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                    {selectedGoal.title}
-                  </h3>
-                  <span className="text-xs font-bold text-indigo-600">
-                    {calculateProgress(selectedGoal.milestones)}% hoàn thành
-                  </span>
-                </div>
-                {selectedGoal.description && (
-                  <p className="mt-1 text-xs text-gray-500">{selectedGoal.description}</p>
+                {isEditingGoal ? (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-600">
+                        Chỉnh sửa Mục Tiêu
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={onSubmitUpdateGoal}
+                          disabled={updatingGoal}
+                          className="rounded-lg bg-emerald-600 p-1.5 text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                          title="Lưu"
+                        >
+                          {updatingGoal ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditingGoal}
+                          className="rounded-lg bg-gray-200 p-1.5 text-gray-600 transition hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300"
+                          title="Hủy"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      value={editingGoalForm.title}
+                      onChange={(e) =>
+                        setEditingGoalForm({ ...editingGoalForm, title: e.target.value })
+                      }
+                      placeholder="Tên mục tiêu..."
+                      className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    />
+                    <textarea
+                      rows={2}
+                      value={editingGoalForm.description}
+                      onChange={(e) =>
+                        setEditingGoalForm({
+                          ...editingGoalForm,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Mô tả mục tiêu..."
+                      className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    />
+                    <input
+                      type="date"
+                      value={editingGoalForm.targetDate}
+                      onChange={(e) =>
+                        setEditingGoalForm({
+                          ...editingGoalForm,
+                          targetDate: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                          {selectedGoal.title}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={startEditingGoal}
+                          className="text-gray-400 transition hover:text-indigo-600"
+                          title="Sửa tên/mô tả mục tiêu"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <span className="text-xs font-bold text-indigo-600">
+                        {calculateProgress(selectedGoal.milestones)}% hoàn thành
+                      </span>
+                    </div>
+                    {selectedGoal.description && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        {selectedGoal.description}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Form thêm Milestone (Đã tối ưu Responsive cho Mobile & Tablet) */}
+              {/* Form thêm Milestone */}
               <form
                 onSubmit={handleCreateMilestone}
                 className="flex flex-col gap-2.5 sm:flex-row sm:items-center"
@@ -221,10 +398,70 @@ export default function LearningProgressTab({
                 </div>
               </form>
 
-              {/* Danh sách Milestone (Đã tối ưu bọc dòng tự động trên màn hình hẹp) */}
+              {/* Danh sách Milestone */}
               <div className="space-y-2">
                 {selectedGoal.milestones?.map((m) => {
                   const isDone = m.status === LearningStatus.Completed
+                  const isEditing = editingMilestoneId === m.id
+
+                  if (isEditing) {
+                    return (
+                      <div
+                        key={m.id}
+                        className="flex flex-col gap-2 rounded-xl border border-indigo-200 bg-indigo-50/20 p-3 transition dark:border-indigo-900 dark:bg-indigo-950/20"
+                      >
+                        <input
+                          type="text"
+                          value={editingMilestoneForm.title}
+                          onChange={(e) =>
+                            setEditingMilestoneForm({
+                              ...editingMilestoneForm,
+                              title: e.target.value,
+                            })
+                          }
+                          placeholder="Sửa tên cột mốc..."
+                          className="w-full rounded-lg border border-gray-200 bg-white p-2 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                        />
+                        <div className="flex items-center justify-between gap-2">
+                          <input
+                            type="date"
+                            value={editingMilestoneForm.targetDate}
+                            onChange={(e) =>
+                              setEditingMilestoneForm({
+                                ...editingMilestoneForm,
+                                targetDate: e.target.value,
+                              })
+                            }
+                            className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-900 outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                          />
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => onSubmitUpdateMilestone(m.id)}
+                              disabled={updatingMilestone}
+                              className="rounded-lg bg-emerald-600 p-1.5 text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                              title="Lưu"
+                            >
+                              {updatingMilestone ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Check className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditingMilestone}
+                              className="rounded-lg bg-gray-200 p-1.5 text-gray-600 transition hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300"
+                              title="Hủy"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   return (
                     <div
                       key={m.id}
@@ -257,13 +494,24 @@ export default function LearningProgressTab({
                         <span className="text-[11px] text-gray-400">
                           {formatDisplayDate(m.targetDate)}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMilestone(m.id)}
-                          className="text-gray-400 transition hover:text-rose-500"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => startEditingMilestone(m)}
+                            className="text-gray-400 transition hover:text-indigo-600"
+                            title="Chỉnh sửa cột mốc"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMilestone(m.id)}
+                            className="text-gray-400 transition hover:text-rose-500"
+                            title="Xóa cột mốc"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )

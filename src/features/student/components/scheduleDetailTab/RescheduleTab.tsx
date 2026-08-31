@@ -216,7 +216,7 @@ export default function RescheduleTab({
           <button
             type="button"
             disabled={processingStatus !== null}
-            onClick={() => handleAction(1)}
+            onClick={() => handleAction(RescheduleRequestStatus.Accepted)}
             className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
           >
             {processingStatus === RescheduleRequestStatus.Accepted ? (

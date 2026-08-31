@@ -40,7 +40,7 @@ export default function ComplaintTab({
     )
   }
   const isCompleted = bookingStatus === BookingStatus.Completed
-
+  console.log(bookingStatus)
   if (!isCompleted) {
     return (
       <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-800 dark:bg-gray-950">

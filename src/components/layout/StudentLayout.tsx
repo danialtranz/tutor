@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/features/auth/auth.store'
+
 import {
   LayoutDashboard,
   Search,
@@ -10,27 +12,18 @@ import {
   Menu,
   X,
   User,
-  Shield,
   GraduationCap,
 } from 'lucide-react'
-import { studentApi } from '@/features/student/api/studentApi'
 import { useQuery } from '@tanstack/react-query'
-import { UserRole } from '@/constants/enums'
 import { authApi } from '@/features/auth/auth.api'
-export const UserRoleLabel: Record<number, string> = {
-  [UserRole.Admin]: 'Admin',
-  [UserRole.Tutor]: 'Tutor',
-  [UserRole.Student]: 'Student',
-}
+
 export default function StudentLayout() {
   const navigate = useNavigate()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
-  const {
-    data: user,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { logout } = useAuthStore()
+
+  // 1. Lấy dữ liệu user từ React Query (hoặc dùng store fallback nếu chưa load xong)
+  const { data: user } = useQuery({
     queryKey: ['current-user'],
     queryFn: authApi.me,
   })
@@ -56,30 +49,18 @@ export default function StudentLayout() {
       path: '/student/progress',
       icon: LineChart,
     },
-    // {
-    //   label: 'Khiếu nại & Báo cáo',
-    //   path: '/student/complaints',
-    //   icon: AlertCircle,
-    // },
   ]
 
-  const handleLogout = () => {
-    setIsLogoutModalOpen(true)
-  }
-
-  const confirmLogout = async () => {
-    setIsLogoutModalOpen(false)
-
-    // 1. Chuyển hướng ngay lập tức để tạo cảm giác mượt mà
-    navigate('/', { replace: true })
-
-    // 2. Thực hiện gọi API / xóa session ở background
+  // 2. Sửa lại hàm handleLogout đúng cú pháp
+  const handleLogout = async () => {
     try {
-      await authApi.logout()
+      await logout()
+      navigate('/login') // Chuyển về trang login hoặc trang chủ tùy bạn
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('Logout failed:', error)
     }
   }
+
   return (
     <div className="flex min-h-screen bg-gray-50 text-gray-800 transition-colors duration-200 dark:bg-gray-950 dark:text-gray-200">
       {/* Overlay cho Mobile Sidebar */}
@@ -96,7 +77,7 @@ export default function StudentLayout() {
           isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Phần Top: Logo + Menu (Có scroll riêng nếu menu quá dài) */}
+        {/* Phần Top: Logo + Menu */}
         <div className="flex flex-1 flex-col overflow-y-auto">
           {/* Logo Platform */}
           <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white/90 px-6 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/90">
@@ -105,11 +86,7 @@ export default function StudentLayout() {
                 <GraduationCap className="h-5 w-5" />
               </div>
               <div className="flex flex-col">
-                <span
-                  className={
-                    'via-brand-200 bg-gradient-to-r from-white to-indigo-300 bg-clip-text text-lg font-extrabold text-transparent'
-                  }
-                >
+                <span className="via-brand-200 bg-gradient-to-r from-white to-indigo-300 bg-clip-text text-lg font-extrabold text-transparent">
                   GiaSưConnect
                 </span>
                 <span className="-mt-1 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
@@ -154,7 +131,7 @@ export default function StudentLayout() {
           </nav>
         </div>
 
-        {/* User Card ở cuối Sidebar - LUÔN CỐ ĐỊNH Ở ĐÁY */}
+        {/* User Card ở cuối Sidebar */}
         <div className="shrink-0 border-t border-gray-100 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-2.5 dark:border-gray-800 dark:bg-gray-800/50">
             <div className="flex items-center gap-2.5 overflow-hidden">
@@ -167,9 +144,11 @@ export default function StudentLayout() {
               />
               <div className="truncate">
                 <p className="truncate text-xs font-bold text-gray-900 dark:text-gray-100">
-                  {user?.name}
+                  {user?.name || 'Học viên'}
                 </p>
-                <p className="truncate text-[11px] text-gray-400">{user?.email}</p>
+                <p className="truncate text-[11px] text-gray-400">
+                  {user?.email || 'Đang tải...'}
+                </p>
               </div>
             </div>
             <button
@@ -187,7 +166,6 @@ export default function StudentLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* HEADER */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white/80 px-4 backdrop-blur-md transition-colors duration-200 sm:px-8 dark:border-gray-800 dark:bg-gray-900/80">
-          {/* Nút Hamburger cho Mobile */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileSidebarOpen(true)}
@@ -200,17 +178,7 @@ export default function StudentLayout() {
             </h2>
           </div>
 
-          {/* Header Right Actions */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Khối Hiển thị Credit */}
-            {/* <div className="flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-xs dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-              <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <span>
-                {user?.role != null ? UserRoleLabel[user?.role] : 'Unknown'}
-              </span>{' '}
-            </div> */}
-
-            {/* Thông báo */}
             <button className="relative rounded-xl p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-gray-900" />
@@ -218,7 +186,6 @@ export default function StudentLayout() {
 
             <div className="h-5 w-px bg-gray-200 dark:bg-gray-800" />
 
-            {/* Profile Menu Quick Icon */}
             <button
               onClick={() => navigate('/student/profile')}
               className="rounded-xl p-2 text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -233,46 +200,6 @@ export default function StudentLayout() {
         <main className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
-        {isLogoutModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
-                  <LogOut className="h-5 w-5" />
-                </div>
-
-                <div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
-                    Đăng xuất
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Bạn có chắc muốn đăng xuất không?
-                  </p>
-                </div>
-              </div>
-
-              <p className="mb-6 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                Bạn sẽ được chuyển về trang đăng nhập sau khi đăng xuất.
-              </p>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setIsLogoutModalOpen(false)}
-                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-                >
-                  Hủy
-                </button>
-
-                <button
-                  onClick={confirmLogout}
-                  className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
-                >
-                  Đăng xuất
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

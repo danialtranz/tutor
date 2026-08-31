@@ -40,6 +40,18 @@ export default function StudentFindTutorPage() {
   }
 
   const initialUtc = getUtcTimes(defaultDateStr, defaultStartTime, defaultEndTime)
+  // Hàm bổ trợ gom thông tin thời gian hiện tại từ Form
+  const getBookingState = () => {
+    const { startTimeUtc, endTimeUtc } = getUtcTimes(lessonDate, startTime, endTime)
+    return {
+      lessonDate,
+      startTime,
+      endTime,
+      startTimeUtc,
+      endTimeUtc,
+      subjectId,
+    }
+  }
 
   // State SearchParams gửi cho React Query API
   const [searchParams, setSearchParams] = useState<TutorSearchParams>({
@@ -269,7 +281,11 @@ export default function StudentFindTutorPage() {
             return (
               <div
                 key={`${item.tutorId}-${item.subjectId}-${index}`}
-                onClick={() => navigate(`tutorDetail/${item.tutorId}`)}
+                onClick={() =>
+                  navigate(`tutorDetail/${item.tutorId}`, {
+                    state: getBookingState(),
+                  })
+                }
                 className="group relative flex cursor-pointer flex-col justify-between rounded-3xl border border-gray-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-xl dark:border-gray-800 dark:bg-gray-900 dark:hover:border-indigo-900/60"
               >
                 <div>
@@ -350,7 +366,9 @@ export default function StudentFindTutorPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      navigate(`tutorDetail/${item.tutorId}`)
+                      navigate(`tutorDetail/${item.tutorId}`, {
+                        state: getBookingState(),
+                      })
                     }}
                     className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:bg-indigo-700 hover:shadow-indigo-500/20 active:scale-95"
                   >
