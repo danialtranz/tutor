@@ -20,6 +20,8 @@ import type {
   Milestone,
   CreateLearningGoalRequest,
   CreateMilestoneRequest,
+  UpdateMilestoneRequest,
+  UpdateLearningGoalRequest,
 } from '../types/learningGoal.types'
 import type { Booking } from '../types/booking.types'
 import type { CreateReviewRequest, Review } from '../types/review.types'
@@ -32,7 +34,7 @@ import ReviewTab from '../components/scheduleDetailTab/ReviewTab'
 import ComplaintTab from '../components/scheduleDetailTab/ComplaintTab'
 import LearningProgressTab from '../components/scheduleDetailTab/LearningProgressTab'
 import type { Complaint } from '../types/complaint.type'
-import { BookingStatus } from '@/constants/enums'
+import { BookingStatus, RescheduleRequestStatus } from '@/constants/enums'
 
 type ActionTab = 'progress' | 'reschedule' | 'cancel' | 'review' | 'complaint'
 
@@ -48,7 +50,72 @@ export default function StudentProgressPage() {
 
   // Sub-Tab Thao Tác
   const [activeActionTab, setActiveActionTab] = useState<ActionTab>('progress')
+  // 1. Hàm cập nhật Goal (Mục tiêu)
+  const handleUpdateGoal = async (goalId: number, data: UpdateLearningGoalRequest) => {
+    try {
+      const updatedGoal = await studentApi.updateLearningGoal(goalId, data)
 
+      // Cập nhật selectedGoal
+      setSelectedGoal((prev) => {
+        if (!prev || prev.id !== goalId) return prev
+        return {
+          ...prev,
+          ...updatedGoal,
+          milestones: prev.milestones, // Giữ lại danh sách milestones hiện tại
+        }
+      })
+
+      // Cập nhật lại danh sách goals tổng
+      setGoals((prev) =>
+        prev.map((g) => (g.id === goalId ? { ...g, ...updatedGoal } : g)),
+      )
+    } catch (error) {
+      console.error('Lỗi khi cập nhật mục tiêu:', error)
+    }
+  }
+
+  // 2. Hàm cập nhật Milestone (Cột mốc)
+  const handleUpdateMilestone = async (
+    milestoneId: number,
+    data: UpdateMilestoneRequest,
+  ) => {
+    if (!selectedGoal) return
+    try {
+      const updatedMilestone = await studentApi.updateMilestone(
+        selectedGoal.id,
+        milestoneId,
+        data,
+      )
+
+      // Cập nhật milestone trong selectedGoal
+      setSelectedGoal((prev) => {
+        if (!prev) return null
+        return {
+          ...prev,
+          milestones: prev.milestones?.map((m) =>
+            m.id === milestoneId ? updatedMilestone : m,
+          ),
+        }
+      })
+
+      // Cập nhật milestone trong danh sách goals tổng
+      setGoals((prev) =>
+        prev.map((g) => {
+          if (g.id === selectedGoal.id) {
+            return {
+              ...g,
+              milestones: g.milestones?.map((m) =>
+                m.id === milestoneId ? updatedMilestone : m,
+              ),
+            }
+          }
+          return g
+        }),
+      )
+    } catch (error) {
+      console.error('Lỗi khi cập nhật cột mốc:', error)
+    }
+  }
   // Forms các Sub-Tab
   const [cancelReason, setCancelReason] = useState('')
   const [rescheduleData, setRescheduleData] = useState({
@@ -543,39 +610,100 @@ export default function StudentProgressPage() {
 
   const handleCancelBooking = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!cancelReason.trim()) return toast.error('Vui lòng nhập lý do hủy')
+
+    if (!cancelReason.trim()) {
+      return toast.error('Vui lòng nhập lý do hủy')
+    }
+
     try {
       setSubmittingSchedule(true)
-      await studentApi.cancelBooking(activeBookingId, { reason: cancelReason })
+
+      await studentApi.cancelBooking(activeBookingId, {
+        reason: cancelReason,
+      })
+
       toast.success('Đã hủy lịch hẹn thành công')
-      fetchScheduleDetail(activeBookingId)
-    } catch (err) {
-      toast.error('Hủy thất bại, vui lòng thử lại!')
+
+      await fetchScheduleDetail(activeBookingId)
+    } catch (error: any) {
+      console.error('Cancel booking error:', error)
+
+      const status = error?.response?.status
+      const message = getApiErrorMessage(error)
+
+      toast.error(status ? `${status}: ${message}` : message)
     } finally {
       setSubmittingSchedule(false)
     }
   }
+  const getApiErrorMessage = (error: any): string => {
+    const data = error?.response?.data
 
+    // BE trả string trực tiếp
+    if (typeof data === 'string') {
+      return data
+    }
+
+    // Các format message phổ biến
+    if (data?.message) {
+      return data.message
+    }
+
+    if (data?.error) {
+      return typeof data.error === 'string' ? data.error : JSON.stringify(data.error)
+    }
+
+    if (data?.title) {
+      return data.title
+    }
+
+    // ASP.NET Core ValidationProblemDetails
+    if (data?.errors) {
+      const errors = Object.values(data.errors).flat()
+
+      if (errors.length > 0) {
+        return errors.join(', ')
+      }
+    }
+
+    // Axios error message
+    if (error?.message) {
+      return error.message
+    }
+
+    return 'Đã xảy ra lỗi. Vui lòng thử lại.'
+  }
   const handleRescheduleBooking = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!rescheduleData.proposedStartTimeUtc || !rescheduleData.proposedEndTimeUtc) {
-      return toast.error('Vui lòng chọn thời gian mới đầy đủ.')
-    }
+
     try {
       setSubmittingSchedule(true)
 
-      const payload = {
-        proposedStartTimeUtc: new Date(rescheduleData.proposedStartTimeUtc).toISOString(),
-        proposedEndTimeUtc: new Date(rescheduleData.proposedEndTimeUtc).toISOString(),
-        reason: rescheduleData.reason,
-      }
+      await studentApi.requestReschedule(activeBookingId, rescheduleData)
 
-      await studentApi.requestReschedule(activeBookingId, payload)
-      toast.success('Đã gửi yêu cầu dời lịch!')
-      setRescheduleData({ proposedStartTimeUtc: '', proposedEndTimeUtc: '', reason: '' })
-      fetchScheduleDetail(activeBookingId)
-    } catch (err: any) {
-      toast.error(err?.response?.message || 'Gửi yêu cầu dời lịch thất bại')
+      toast.success('Gửi yêu cầu dời lịch thành công!')
+
+      // Load lại booking để cập nhật pendingProposal
+      await fetchScheduleDetail(activeBookingId)
+
+      // Reset form
+      setRescheduleData({
+        proposedStartTimeUtc: '',
+        proposedEndTimeUtc: '',
+        reason: '',
+      })
+    } catch (error: any) {
+      console.error('Reschedule error:', error)
+
+      const status = error?.response?.status
+      const message = getApiErrorMessage(error)
+
+      // Ví dụ:
+      // 400: Thời gian đề xuất không hợp lệ
+      // 404: Không tìm thấy booking
+      // 409: Đã có yêu cầu dời lịch đang chờ xử lý
+      // 500: Internal Server Error
+      toast.error(status ? `${status}: ${message}` : message)
     } finally {
       setSubmittingSchedule(false)
     }
@@ -587,16 +715,29 @@ export default function StudentProgressPage() {
     responseNote: string,
   ) => {
     try {
+      setSubmittingSchedule(true)
+
       await studentApi.updateRescheduleStatus(activeBookingId, proposalId, {
         status,
         responseNote,
       })
+
       toast.success(
-        status === 1 ? 'Đã chấp nhận dời lịch!' : 'Đã từ chối yêu cầu dời lịch!',
+        status === RescheduleRequestStatus.Accepted
+          ? 'Đã chấp nhận dời lịch!'
+          : 'Đã từ chối yêu cầu dời lịch!',
       )
-      fetchScheduleDetail(activeBookingId)
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Xử lý yêu cầu thất bại')
+
+      await fetchScheduleDetail(activeBookingId)
+    } catch (error: any) {
+      console.error('Update reschedule status error:', error)
+
+      const statusCode = error?.response?.status
+      const message = getApiErrorMessage(error)
+
+      toast.error(statusCode ? `${statusCode}: ${message}` : message)
+    } finally {
+      setSubmittingSchedule(false)
     }
   }
 
@@ -623,8 +764,9 @@ export default function StudentProgressPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* HEADER PAGE */}
+      <Toaster position="top-right" />
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Toaster position="top-right" />
         <div>
           <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-gray-100">
             Chi Tiết Lịch Học & Tiến Độ
@@ -794,6 +936,9 @@ export default function StudentProgressPage() {
                 handleCreateMilestone={handleCreateMilestone}
                 handleToggleMilestoneStatus={handleToggleMilestoneStatus}
                 handleDeleteMilestone={handleDeleteMilestone}
+                // THÊM 2 HÀM CẬP NHẬT Ở ĐÂY:
+                handleUpdateGoal={handleUpdateGoal}
+                handleUpdateMilestone={handleUpdateMilestone}
                 calculateProgress={calculateProgress}
                 formatDisplayDate={formatDisplayDate}
               />
@@ -854,6 +999,7 @@ export default function StudentProgressPage() {
                 myComplaint={myComplaint}
                 againstMeComplaint={againstMeComplaint}
                 isLoading={loadingComplaint}
+                bookingStatus={booking?.status}
               />
             )}
           </div>

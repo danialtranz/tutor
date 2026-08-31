@@ -36,21 +36,22 @@ export function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-700 via-brand-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-600/15">
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+      <div className="from-brand-700 via-brand-600 shadow-brand-600/15 relative overflow-hidden rounded-3xl bg-gradient-to-r to-indigo-600 p-6 text-white shadow-xl sm:p-8">
+        <div className="relative z-10 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md mb-3">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               Hệ thống quản trị GiaSưConnect
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
               Chào mừng trở lại, Quản trị viên! 👋
             </h1>
-            <p className="mt-1.5 text-sm text-white/80 max-w-xl">
-              Theo dõi hiệu năng hệ thống, phê duyệt hồ sơ gia sư và quản lý hoạt động học tập toàn diện.
+            <p className="mt-1.5 max-w-xl text-sm text-white/80">
+              Theo dõi hiệu năng hệ thống, phê duyệt hồ sơ gia sư và quản lý hoạt động học
+              tập toàn diện.
             </p>
           </div>
-          <div className="flex gap-3 shrink-0">
+          <div className="flex shrink-0 gap-3">
             <Button
               variant="gradient"
               onClick={() => navigate('/admin/tutor-applications')}
@@ -62,12 +63,18 @@ export function AdminDashboardPage() {
         </div>
 
         {/* Decorative backdrop shapes */}
-        <div aria-hidden="true" className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div aria-hidden="true" className="absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl" />
+        <div
+          aria-hidden="true"
+          className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-white/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl"
+        />
       </div>
 
       {/* KPI Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading ? (
           <>
             <Skeleton className="h-32 rounded-2xl" />
@@ -77,70 +84,70 @@ export function AdminDashboardPage() {
           </>
         ) : (
           <>
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex items-center justify-between">
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-xs font-extrabold tracking-wider text-slate-400 uppercase">
                   Tổng lượt đặt lớp
                 </p>
-                <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-1">
+                <h3 className="mt-1 text-3xl font-black text-slate-900 dark:text-slate-100">
                   {stats?.periodMetrics.bookingStatistics.total}
                 </h3>
-                <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-200/60 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:border-emerald-800/60 dark:bg-emerald-950/60 dark:text-emerald-300">
                   <span>✓</span> Tổng lượt đặt lớp trong kỳ
                 </div>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-3xl shadow-xs">
+              <div className="bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex h-14 w-14 items-center justify-center rounded-2xl text-3xl shadow-xs">
                 👨‍🏫
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex items-center justify-between">
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-xs font-extrabold tracking-wider text-slate-400 uppercase">
                   Mục tiêu đủ điều kiện
                 </p>
-                <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-1">
+                <h3 className="mt-1 text-3xl font-black text-slate-900 dark:text-slate-100">
                   {stats?.currentSnapshot.goalCompletionRate.eligibleGoals}
                 </h3>
-                <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 dark:text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-200/60 dark:border-indigo-800/60">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-indigo-200/60 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:border-indigo-800/60 dark:bg-indigo-950/60 dark:text-indigo-300">
                   <span>✨</span> Mục tiêu đủ điều kiện
                 </div>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-3xl shadow-xs">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-3xl text-indigo-600 shadow-xs dark:bg-indigo-950/60 dark:text-indigo-400">
                 🎓
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex items-center justify-between">
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-xs font-extrabold tracking-wider text-slate-400 uppercase">
                   Hồ Sơ Chờ Duyệt
                 </p>
-                <h3 className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">
+                <h3 className="mt-1 text-3xl font-black text-amber-600 dark:text-amber-400">
                   {stats?.currentSnapshot.pendingTutorApprovals}
                 </h3>
-                <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-800/60">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-200/60 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:border-amber-800/60 dark:bg-amber-950/60 dark:text-amber-300">
                   <span>⏱️</span> Cần xử lý ngay
                 </div>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center text-3xl shadow-xs">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-3xl text-amber-600 shadow-xs dark:bg-amber-950/60 dark:text-amber-400">
                 ⏳
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex items-center justify-between">
+            <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-xs font-extrabold tracking-wider text-slate-400 uppercase">
                   Khiếu Nại Mới
                 </p>
-                <h3 className="text-3xl font-black text-rose-600 dark:text-rose-400 mt-1">
+                <h3 className="mt-1 text-3xl font-black text-rose-600 dark:text-rose-400">
                   {stats?.currentSnapshot.openComplaints}
                 </h3>
-                <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/60 dark:text-rose-300 px-2.5 py-1 rounded-full border border-rose-200/60 dark:border-rose-800/60">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-rose-200/60 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:border-rose-800/60 dark:bg-rose-950/60 dark:text-rose-300">
                   <span>🔔</span> Đang chờ giải quyết
                 </div>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-3xl shadow-xs">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-3xl text-rose-600 shadow-xs dark:bg-rose-950/60 dark:text-rose-400">
                 ⚠️
               </div>
             </div>
@@ -148,63 +155,53 @@ export function AdminDashboardPage() {
         )}
       </div>
 
-      {/* Analytics Chart & Activity Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                Các môn học được đặt nhiều nhất
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Dữ liệu trong khoảng thời gian dashboard trả về</p>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
-              🗓️ Kỳ thống kê
-            </div>
+      {/* Full-width Analytics Chart */}
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Các môn học được đặt nhiều nhất
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Dữ liệu trong khoảng thời gian dashboard trả về
+            </p>
           </div>
-
-          {/* Bar Chart */}
-          <div className="h-64 flex items-end justify-between gap-3 pt-8 pb-3 px-2 sm:px-6 border-b border-slate-100 dark:border-slate-800">
-            {stats?.periodMetrics.popularSubjects.map((item) => (
-              <div key={item.subjectId} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                <div className="w-full flex items-end justify-center gap-1.5 h-full">
-                  {/* Bookings bar */}
-                  <div
-                    style={{ height: `${Math.max((item.bookingCount / Math.max(...(stats?.periodMetrics.popularSubjects.map((subject) => subject.bookingCount) ?? [1]))) * 100, 4)}%` }}
-                    className="w-full bg-gradient-to-t from-brand-600 to-indigo-500 rounded-t-lg relative group transition-all duration-300 hover:brightness-110"
-                  >
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-900 text-white text-[11px] font-bold py-1 px-2 rounded-md z-10 whitespace-nowrap shadow-lg">
-                      {item.bookingCount} lượt đặt
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{item.subjectName}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-center gap-8 mt-5 text-xs font-bold text-slate-600 dark:text-slate-400">
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-brand-600 inline-block shadow-xs" />
-              <span>Số lượt đặt lớp</span>
-            </div>
+          <div className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            🗓️ Kỳ thống kê
           </div>
         </div>
 
-        {/* System Activity Log */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-5">Nhật ký quản trị</h3>
-            <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              API contract v2 chưa cung cấp endpoint nhật ký quản trị, nên dữ liệu này không được hiển thị giả lập.
-            </p>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Trạng thái máy chủ:</span>
-              <span className="text-slate-400">Không có endpoint health trong phạm vi dashboard</span>
+        {/* Bar Chart */}
+        <div className="flex h-64 items-end justify-between gap-3 border-b border-slate-100 px-2 pt-8 pb-3 sm:px-6 dark:border-slate-800">
+          {stats?.periodMetrics.popularSubjects.map((item) => (
+            <div
+              key={item.subjectId}
+              className="flex h-full flex-1 flex-col items-center justify-end gap-2"
+            >
+              <div className="flex h-full w-full items-end justify-center gap-1.5">
+                {/* Bookings bar */}
+                <div
+                  style={{
+                    height: `${Math.max((item.bookingCount / Math.max(...(stats?.periodMetrics.popularSubjects.map((subject) => subject.bookingCount) ?? [1]))) * 100, 4)}%`,
+                  }}
+                  className="from-brand-600 group relative w-full rounded-t-lg bg-gradient-to-t to-indigo-500 transition-all duration-300 hover:brightness-110"
+                >
+                  <span className="absolute -top-8 left-1/2 z-10 hidden -translate-x-1/2 rounded-md bg-slate-900 px-2 py-1 text-[11px] font-bold whitespace-nowrap text-white shadow-lg group-hover:block">
+                    {item.bookingCount} lượt đặt
+                  </span>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                {item.subjectName}
+              </span>
             </div>
+          ))}
+        </div>
+
+        <div className="mt-5 flex items-center justify-center gap-8 text-xs font-bold text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-2">
+            <span className="bg-brand-600 inline-block h-3 w-3 rounded-full shadow-xs" />
+            <span>Số lượt đặt lớp</span>
           </div>
         </div>
       </div>

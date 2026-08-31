@@ -21,6 +21,7 @@ import type {
   CreateMilestoneRequest,
   LearningGoal,
   Milestone,
+  UpdateLearningGoalRequest,
   UpdateMilestoneRequest,
 } from '../types/learningGoal.types'
 import { LearningStatus } from '@/constants/enums'
@@ -30,26 +31,33 @@ export default function StudentProgressPage() {
   const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // --- States quản lý Modal Edit Goal (Đổi tên/mô tả mục tiêu) ---
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false)
+  const [goalTitle, setGoalTitle] = useState('')
+  const [goalDescription, setGoalDescription] = useState('')
+  const [updatingGoal, setUpdatingGoal] = useState(false)
   // --- States quản lý Modal Create/Edit Milestone ---
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null)
   const [submitting, setSubmitting] = useState(false)
-
+  const [goalTargetDate, setGoalTargetDate] = useState('')
   // --- States quản lý Xóa Goal ---
   const [deletingGoalId, setDeletingGoalId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Form State
+  // Form State cho Milestone
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [targetDate, setTargetDate] = useState('')
   const [orderNumber, setOrderNumber] = useState(1)
 
-  // Chuỗi ISO YYYY-MM-DD của hôm nay dùng cho attribute min
+  // Chuỗi ISO YYYY-MM-DD của hôm nay (theo local time)
   const todayString = useMemo(() => {
     const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return today.toISOString().split('T')[0]
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }, [])
 
   useEffect(() => {
@@ -93,6 +101,66 @@ export default function StudentProgressPage() {
     return [...selectedGoal.milestones].sort((a, b) => a.orderNumber - b.orderNumber)
   }, [selectedGoal])
 
+  // --- Handlers Cập nhật Goal (Đổi tên/mô tả) ---
+  const handleOpenEditGoalModal = () => {
+    if (!selectedGoal) return
+
+    setGoalTitle(selectedGoal.title)
+    setGoalDescription(selectedGoal.description || '')
+
+    setGoalTargetDate(
+      selectedGoal.targetDate ? (selectedGoal.targetDate.split('T')[0] ?? '') : '',
+    )
+
+    setIsGoalModalOpen(true)
+  }
+
+  const handleCloseGoalModal = () => {
+    setIsGoalModalOpen(false)
+  }
+
+  const handleUpdateGoal = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!selectedGoalId) return
+
+    if (!goalTitle.trim()) {
+      toast.error('Vui lòng nhập tên mục tiêu!')
+      return
+    }
+
+    if (!goalTargetDate) {
+      toast.error('Vui lòng chọn hạn hoàn thành!')
+      return
+    }
+
+    if (goalTargetDate < todayString) {
+      toast.error('Hạn hoàn thành không được nằm trong quá khứ!')
+      return
+    }
+
+    try {
+      setUpdatingGoal(true)
+
+      const payload: UpdateLearningGoalRequest = {
+        title: goalTitle.trim(),
+        description: goalDescription.trim(),
+        targetDate: goalTargetDate,
+      }
+
+      await studentApi.updateLearningGoal(selectedGoalId, payload)
+
+      toast.success('Đã cập nhật mục tiêu!')
+
+      await fetchGoals()
+      handleCloseGoalModal()
+    } catch (error) {
+      console.error('Lỗi khi cập nhật mục tiêu:', error)
+      toast.error('Không thể cập nhật mục tiêu!')
+    } finally {
+      setUpdatingGoal(false)
+    }
+  }
   // --- Handlers Xóa Goal ---
   const handleDeleteGoal = async () => {
     if (!deletingGoalId) return
@@ -103,11 +171,9 @@ export default function StudentProgressPage() {
 
       toast.success('Đã xóa mục tiêu học tập!')
 
-      // Cập nhật danh sách local
       const updatedGoals = goals.filter((g) => g.id !== deletingGoalId)
       setGoals(updatedGoals)
 
-      // Chuyển selection sang goal khác nếu goal bị xóa đang chọn
       if (selectedGoalId === deletingGoalId) {
         setSelectedGoalId(updatedGoals.length > 0 ? (updatedGoals[0]?.id ?? null) : null)
       }
@@ -122,7 +188,6 @@ export default function StudentProgressPage() {
   }
 
   // --- Handlers Modal & CRUD Milestone ---
-
   const handleOpenCreateModal = () => {
     setEditingMilestone(null)
     setTitle('')
@@ -164,12 +229,7 @@ export default function StudentProgressPage() {
       return
     }
 
-    const selectedDate = new Date(targetDate)
-    const today = new Date()
-    selectedDate.setHours(0, 0, 0, 0)
-    today.setHours(0, 0, 0, 0)
-
-    if (selectedDate < today) {
+    if (targetDate < todayString) {
       toast.error('Hạn hoàn thành không được nằm trong quá khứ!')
       return
     }
@@ -226,7 +286,6 @@ export default function StudentProgressPage() {
   }
 
   // --- Calculated Data ---
-
   const completedMilestones = milestones.filter(
     (milestone: Milestone) => milestone.status === LearningStatus.Completed,
   ).length
@@ -453,7 +512,6 @@ export default function StudentProgressPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1">
-                    {/* Nút Xóa Goal */}
                     <button
                       type="button"
                       title="Xóa mục tiêu"
@@ -505,6 +563,18 @@ export default function StudentProgressPage() {
                     <h2 className="text-2xl font-black text-gray-900 dark:text-white">
                       {selectedGoal.title}
                     </h2>
+
+                    {/* Nút Đổi tên / Chỉnh sửa Mục tiêu */}
+                    <button
+                      type="button"
+                      onClick={handleOpenEditGoalModal}
+                      className="rounded-lg p-1.5 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-400"
+                      title="Chỉnh sửa / Đổi tên mục tiêu"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </button>
+
+                    {/* Nút Xóa Mục tiêu */}
                     <button
                       type="button"
                       onClick={() => setDeletingGoalId(selectedGoal.id)}
@@ -639,7 +709,6 @@ export default function StudentProgressPage() {
                 </div>
               </div>
 
-              {/* Button Thêm Cột Mốc Mới */}
               <button
                 type="button"
                 onClick={handleOpenCreateModal}
@@ -668,7 +737,6 @@ export default function StudentProgressPage() {
 
                     return (
                       <div key={milestone.id} className="relative flex gap-4">
-                        {/* Nút check trạng thái */}
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(milestone)}
@@ -736,7 +804,6 @@ export default function StudentProgressPage() {
                                 ) : null}
                               </div>
 
-                              {/* Action edit milestone */}
                               <button
                                 type="button"
                                 onClick={() => handleOpenEditModal(milestone)}
@@ -774,6 +841,72 @@ export default function StudentProgressPage() {
             </section>
           )}
         </>
+      )}
+
+      {/* Modal Sửa Tên/Mô tả Mục tiêu */}
+      {isGoalModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 dark:border-gray-800">
+              <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                Chỉnh sửa mục tiêu
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseGoalModal}
+                className="rounded-xl p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateGoal} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Tên mục tiêu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={goalTitle}
+                  onChange={(e) => setGoalTitle(e.target.value)}
+                  placeholder="Ví dụ: Ôn thi chứng chỉ JLPT N3"
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:bg-gray-50 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-950"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Mô tả chi tiết
+                </label>
+                <textarea
+                  value={goalDescription}
+                  onChange={(e) => setGoalDescription(e.target.value)}
+                  placeholder="Ghi chú thêm về mục tiêu này..."
+                  rows={3}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:bg-gray-50 focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-gray-950"
+                />
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCloseGoalModal}
+                  className="rounded-xl px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingGoal}
+                  className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                >
+                  {updatingGoal ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Modal Xóa Goal */}
@@ -817,14 +950,14 @@ export default function StudentProgressPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 dark:border-gray-800">
+              <h3 className="text-lg font-black text-gray-900 dark:text-white">
                 {editingMilestone ? 'Chỉnh sửa cột mốc' : 'Thêm cột mốc mới'}
               </h3>
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                className="rounded-xl p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -832,7 +965,7 @@ export default function StudentProgressPage() {
 
             <form onSubmit={handleSubmitMilestone} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
                   Tên cột mốc <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -840,26 +973,27 @@ export default function StudentProgressPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ví dụ: Hoàn thành Chương 1"
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
-                  Mô tả
+                <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                  Mô tả chi tiết
                 </label>
                 <textarea
-                  rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Chi tiết nội dung hoặc yêu cầu cần đạt được..."
-                  className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                  placeholder="Ghi chú về cột mốc này..."
+                  rows={3}
+                  className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
                     Hạn hoàn thành <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -867,42 +1001,43 @@ export default function StudentProgressPage() {
                     min={todayString}
                     value={targetDate}
                     onChange={(e) => setTargetDate(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
+                    required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-200">
-                    Thứ tự
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300">
+                    Thứ tự cột mốc
                   </label>
                   <input
                     type="number"
                     min={1}
                     value={orderNumber}
                     onChange={(e) => setOrderNumber(Number(e.target.value))}
-                    className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-900 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
                   />
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+              <div className="mt-6 flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="rounded-xl px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                  className="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
                 >
                   {submitting
                     ? 'Đang lưu...'
                     : editingMilestone
-                      ? 'Lưu thay đổi'
-                      : 'Tạo mới'}
+                      ? 'Cập nhật'
+                      : 'Thêm mới'}
                 </button>
               </div>
             </form>
